@@ -17,7 +17,7 @@ import e from "express"
  * - isCustomErr: a boolean value set to true, indicating that this is a custom error object.
 */
 export const err = (
-    status: number, 
+    status: number,
     message: string,
     error?: any
 ) => {
@@ -41,9 +41,9 @@ export const err = (
  * - isCustomErr: a boolean value set to true, indicating that this is a custom error object.
 */
 export const handleSaveError = (error: any) => {
-    if(error.name === 'ValidationError') {
+    if (error.name === 'ValidationError') {
         const keys = Object.keys(error.errors)
-        const errObj: {[key: string]: string} = {}
+        const errObj: { [key: string]: string } = {}
 
         const message = keys.map((key) => {
             errObj[key] = error.errors[key].message
@@ -53,7 +53,7 @@ export const handleSaveError = (error: any) => {
 
 
         return err(400, message, errObj)
-    } else if(error.code === 11000) {
+    } else if (error.code === 11000) {
         const message = Object.keys(error.keyValue)
             .map((key) => {
                 return `${key}, `
@@ -63,4 +63,19 @@ export const handleSaveError = (error: any) => {
     } else {
         return err(500, 'Internal server error', error)
     }
+}
+
+/**
+ * The function `separateCookies` takes a cookie string and returns an object with key-value pairs
+ * representing the separate cookies.
+ * @param {string} cookie - The `cookie` parameter is a string that represents a cookie.
+ * @returns The function `separateCookies` returns an object with key-value pairs representing the
+ * separate cookies.
+ */
+export const separateCookies = (cookie: string) => {
+    return cookie.split(';').reduce((acc, cookie) => {
+        const [key, value] = cookie.split('=')
+        acc[key.trim()] = value
+        return acc
+    }, {} as { [key: string]: string })
 }
