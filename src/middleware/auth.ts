@@ -1,4 +1,3 @@
-import cookieParser from 'cookie-parser'
 import jwt, { JwtPayload } from 'jsonwebtoken'
 import { NextFunction, Request, Response } from 'express'
 import { err, separateCookies } from '../constants/general'
@@ -10,8 +9,10 @@ export async function auth(req: Request, res: Response, next: NextFunction) {
         if (!cookieString) throw err(401, 'No cookie found')
 
         const cookies = separateCookies(cookieString)
+        if (!cookies.access_token) throw err(401, 'No access token found')
 
         const decoded = jwt.verify(cookies.access_token, process.env.JWT_SECRET!) as { _id: string }
+        if (!decoded._id) throw err(403, 'Token not found')
 
         const user = await User.findById(decoded._id)
         if (!user) throw err(403, 'User not found')
@@ -33,6 +34,8 @@ export async function auth(req: Request, res: Response, next: NextFunction) {
                     .status(403)
                     .send(err)
             }
+        } else {
+            res.status(403).send(err)
         }
     }
 }

@@ -47,18 +47,21 @@ authRouter.get('/login/google/callback',
     try {
       const authInfo = req.authInfo as authInfoI
 
+      req.cookies.access_token = authInfo.access_token
+      req.cookies.refresh_token = authInfo.refresh_token
+
       res
         .cookie('access_token', authInfo.access_token, {
           httpOnly: true,
           secure: true,
-          maxAge: 1000 * 60 * 10
+          maxAge: 1000 * 60 * 15
         })
         .cookie('refresh_token', authInfo.refresh_token, {
           httpOnly: true,
           secure: true,
-          maxAge: 1000 * 60 * 60 * 24
+          maxAge: 1000 * 60 * 60 * 24 * 7
         })
-        .redirect(`${process.env.BUSINESS_WEBSITE}dashboard`)
+        .redirect(`${process.env.BUSINESS_WEBSITE}login`)
 
     } catch (e: any) {
       if (e.isCustomErr) {
@@ -76,6 +79,36 @@ authRouter.get('/google/failure', (req, res) => {
   res.send('Failed to authenticate..')
 })
 
+authRouter.get('/check', async (req, res) => {
+  try {
+    const cookieString = req.headers.cookie
+    if (!cookieString) throw err(401, 'No cookie found')
+
+    const cookies = separateCookies(cookieString)
+    if (!cookies.access_token) throw err(401, 'No access token found')
+
+    const decoded: JwtPayload = jwt.verify(cookies.access_token, process.env.JWT_SECRET!) as { _id: string }
+
+    const user = await User.findById(decoded._id)
+    if (!user) throw err(403, 'User not found')
+
+    res.send({
+      access_token: cookies.access_token
+    })
+  } catch (e: any) {
+    if (e.isCustomErr) {
+      res.status(e.status).send(e)
+    } else if (e.name === 'TokenExpiredError') {
+      res.status(401)
+        .clearCookie('access_token')
+        .clearCookie('refresh_token')
+        .send(e)
+    } else {
+      res.status(403).send(e)
+    }
+  }
+})
+
 authRouter.get('/refresh_token', async (req, res) => {
   try {
     const cookieString = req.headers.cookie
@@ -90,7 +123,7 @@ authRouter.get('/refresh_token', async (req, res) => {
 
     const userToken = user.generateToken()
 
-    res.send(userToken)
+    res.send({ 'access_token': userToken.access_token })
   } catch (e: any) {
     if (e.isCustomErr) {
       res.status(e.status).send(e)
@@ -100,7 +133,7 @@ authRouter.get('/refresh_token', async (req, res) => {
         .clearCookie('refresh_token')
         .send(e)
     } else {
-      res.send(e)
+      res.status(403).send(e)
     }
   }
 })

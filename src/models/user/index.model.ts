@@ -108,8 +108,8 @@ const userSchema = new Schema<UserI, UserModelT, UserMethodsI & UserVirtualsI>({
 
 userSchema.methods.generateToken = function () {
     const user = this
-    const access_token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET!, { expiresIn: '5m' })
-    const refresh_token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET!, { expiresIn: '10m' })
+    const access_token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET!, { expiresIn: '15m' })
+    const refresh_token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET!, { expiresIn: '1d' })
 
     return { access_token, refresh_token }
 }
