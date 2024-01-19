@@ -2,19 +2,9 @@ import { Schema, InferSchemaType, model, Model } from 'mongoose'
 import v from 'validator'
 import jwt from 'jsonwebtoken'
 import bcrypt from 'bcrypt'
+import { capitalizeAllFirstLetters } from '../../constants/general'
 
-interface UserMethodsI {
-    generateToken: () => {
-        access_token: string
-        refresh_token: string
-    }
-}
-
-interface UserVirtualsI {
-    fullName: string
-}
-
-interface UserI {
+export interface UserI {
     email: string
     password: string
     firstName: string
@@ -29,6 +19,19 @@ interface UserI {
         jwt: string
         refreshToken: string
     }
+}
+interface UserMethodsI {
+    generateToken: () => {
+        access_token: string
+        refresh_token: string
+    }
+    prettyPrint(): {
+        [key: string]: any
+    }
+}
+
+interface UserVirtualsI {
+    fullName: string
 }
 
 type UserModelT = Model<UserI, {}, UserMethodsI & UserVirtualsI>
@@ -115,6 +118,21 @@ userSchema.methods.generateToken = function () {
     return { access_token, refresh_token }
 }
 
+userSchema.methods.prettyPrint = function () {
+    const user = this
+
+    const userObject = user.toObject({ virtuals: true })
+
+    userObject.firstName = capitalizeAllFirstLetters(userObject.firstName)
+    userObject.lastName = capitalizeAllFirstLetters(userObject.lastName)
+
+    delete userObject.password
+    delete userObject.auth
+    delete userObject.google
+
+    return userObject
+}
+
 userSchema.pre('save', async function (next) { //must use ES5 function to use the "this" binding
     const user = this // "this" is in reverence to userSchema
 
@@ -139,7 +157,7 @@ userSchema.pre('save', async function (next) { //must use ES5 function to use th
 
 userSchema.virtual('fullName')
     .get(function (this: UserI) {
-        return `${this.firstName} ${this.lastName}`
+        return capitalizeAllFirstLetters(`${this.firstName} ${this.lastName}`)
     })
     .set(function (this: UserI, value: string) {
         const [firstName, lastName] = value.split(' ')

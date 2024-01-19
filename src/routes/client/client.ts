@@ -74,7 +74,11 @@ userRouter.post(
     })
 
 userRouter.get('/information', auth, (req: Request, res: Response) => {
-    res.status(200).send(req.user)
+    const { userData } = req
+
+
+    //@ts-ignore
+    res.status(200).send(userData.prettyPrint())
 })
 
 export default userRouter

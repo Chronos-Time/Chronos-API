@@ -7,6 +7,7 @@ import jwt, { JwtPayload } from "jsonwebtoken"
 import User from "../models/user/index.model"
 import v from 'validator'
 import bcrypt from 'bcrypt'
+import { auth } from "../middleware/auth"
 
 const authRouter = Router()
 
@@ -154,9 +155,20 @@ authRouter.get('/refresh_token', async (req, res) => {
     const user = await User.findById(decoded._id)
     if (!user) throw err(403, 'Invalid Credentials')
 
-    const userToken = user.generateToken()
+    const tokenData = user.generateToken()
 
-    res.send({ 'access_token': userToken.access_token })
+    res.cookie('access_token', tokenData.access_token, {
+      httpOnly: true,
+      secure: true,
+      maxAge: 1000 * 60 * 15
+    })
+    res.cookie('refresh_token', tokenData.refresh_token, {
+      httpOnly: true,
+      secure: true,
+      maxAge: 1000 * 60 * 60 * 24
+    })
+
+    res.send({ 'access_token': tokenData.access_token })
   } catch (e: any) {
     if (e.isCustomErr) {
       res.status(e.status).send(e)
@@ -169,6 +181,13 @@ authRouter.get('/refresh_token', async (req, res) => {
       res.status(403).send(e)
     }
   }
+})
+
+authRouter.get('/logout', auth, (req, res) => {
+
+  res.clearCookie('access_token')
+  res.clearCookie('refresh_token')
+  res.send('Logged out')
 })
 
 export default authRouter

@@ -1,7 +1,13 @@
 import jwt, { JwtPayload } from 'jsonwebtoken'
 import { NextFunction, Request, Response } from 'express'
 import { err, separateCookies } from '../constants/general'
-import User from '../models/user/index.model'
+import User, { UserI, UserT } from '../models/user/index.model'
+
+declare module "express-serve-static-core" {
+    interface Request {
+        userData: UserI
+    }
+}
 
 export async function auth(req: Request, res: Response, next: NextFunction) {
     try {
@@ -14,11 +20,11 @@ export async function auth(req: Request, res: Response, next: NextFunction) {
         const user = await User.findById(decoded._id)
         if (!user) throw err(403, 'User not found')
 
-        req.user = user
+        req.userData = user
 
         next()
     } catch (err: any) {
-        if (err.name === 'TokenExpiredError') {
+        if (err.name === 'TokenExpiredError' || err.name === 'JsonWebTokenError' || err.status === 401) {
             res
                 .clearCookie('access_token')
                 .status(401)

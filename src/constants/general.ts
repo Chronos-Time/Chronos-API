@@ -79,3 +79,14 @@ export const separateCookies = (cookie: string) => {
         return acc
     }, {} as { [key: string]: string })
 }
+
+/**
+ * The function `capitalizeAllFirstLetters` takes a string and returns a new string where the first
+ * @param {string} str - The parameter `str` is a string that represents the input sentence or phrase.
+ * @returns {string} a new string where the first letter are capitalized
+ */
+export const capitalizeAllFirstLetters = (str: string) => {
+    return str.split(' ').map((word) => {
+        return word[0].toUpperCase() + word.slice(1)
+    }).join(' ')
+}
