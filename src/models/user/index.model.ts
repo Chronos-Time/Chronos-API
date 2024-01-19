@@ -1,6 +1,7 @@
 import { Schema, InferSchemaType, model, Model } from 'mongoose'
 import v from 'validator'
 import jwt from 'jsonwebtoken'
+import bcrypt from 'bcrypt'
 
 interface UserMethodsI {
     generateToken: () => {
@@ -51,7 +52,7 @@ const userSchema = new Schema<UserI, UserModelT, UserMethodsI & UserVirtualsI>({
     password: {
         type: String,
         required: false,
-        trim: true,
+        // trim: true,
         minlength: [8, 'password must be at least 8 characters long']
     },
     firstName: {
@@ -113,6 +114,28 @@ userSchema.methods.generateToken = function () {
 
     return { access_token, refresh_token }
 }
+
+userSchema.pre('save', async function (next) { //must use ES5 function to use the "this" binding
+    const user = this // "this" is in reverence to userSchema
+
+    if (user.isModified('firstName')) {
+        user.firstName = user.firstName.toLowerCase()
+    }
+
+    if (user.isModified('lastName')) {
+        user.lastName = user.lastName.toLowerCase()
+    }
+
+    if (user.isModified('email')) {
+        user.email = user.email.toLowerCase()
+    }
+
+    if (user.isModified('password')) {
+        user.password = await bcrypt.hash(user.password, 8)
+    }
+
+    next()
+})
 
 userSchema.virtual('fullName')
     .get(function (this: UserI) {

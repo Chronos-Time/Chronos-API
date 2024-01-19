@@ -3,6 +3,8 @@ import User from '../../models/user/index.model'
 import { err, handleSaveError } from '../../constants/general'
 import c from 'ansi-colors'
 import { auth } from '../../middleware/auth'
+import bcrypt from 'bcrypt'
+import v from 'validator'
 
 const userRouter = express.Router()
 
@@ -24,10 +26,15 @@ userRouter.post(
         try {
             const {
                 email,
-                password,
                 firstName,
-                lastName
+                lastName,
+                password
             } = req.body
+
+            if (!v.isEmail(email)) throw err(400, 'Invalid email')
+            if (!v.isStrongPassword(req.body.password)) throw err(400, 'Password is not strong enough')
+            if (!v.isAlpha(firstName)) throw err(400, 'First name must be alphabetic')
+            if (!v.isAlpha(lastName)) throw err(400, 'Last name must be alphabetic')
 
             const newClient = new User({
                 email,
@@ -36,12 +43,27 @@ userRouter.post(
                 lastName
             })
 
-            await newClient.save()
+            const user = await newClient.save()
                 .catch((error) => {
                     throw handleSaveError(error)
                 })
 
-            res.status(200).send(newClient)
+            const userToken = user.generateToken()
+            res
+                .status(200)
+                .cookie('access_token', userToken.access_token, {
+                    httpOnly: true,
+                    secure: true,
+                    maxAge: 1000 * 60 * 15
+                })
+                .cookie('refresh_token', userToken.refresh_token, {
+                    httpOnly: true,
+                    secure: true,
+                    maxAge: 1000 * 60 * 60 * 24
+                })
+                .send({
+                    access_token: userToken.access_token,
+                })
         } catch (e: any) {
             if (e.isCustomErr) {
                 res.status(e.status).send(e)

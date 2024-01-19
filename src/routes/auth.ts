@@ -1,11 +1,12 @@
-import { Router } from "express"
+import { Router, Request } from "express"
 import Passport from "../passport"
 import c from "ansi-colors"
 import passport from "../passport"
 import { err, separateCookies } from "../constants/general"
 import jwt, { JwtPayload } from "jsonwebtoken"
 import User from "../models/user/index.model"
-import cookieParser, { signedCookies } from "cookie-parser"
+import v from 'validator'
+import bcrypt from 'bcrypt'
 
 const authRouter = Router()
 
@@ -33,6 +34,45 @@ authRouter.get(
   }
 )
 
+authRouter.post('/login/user', async (req: Request<{}, {}, { email: string, password: string }>, res) => {
+  try {
+    const { email, password } = req.body
+    if (!email || !password) throw err(400, 'Missing username or password')
+    if (!v.isEmail(email)) throw err(400, 'Invalid email')
+
+    const user = await User.findOne({ email })
+    if (!user) throw err(400, 'User not found')
+
+    const doesItMatch = await bcrypt.compare(password, user.password)
+    if (!doesItMatch) throw err(400, 'Invalid credentials')
+
+    const {
+      access_token,
+      refresh_token
+    } = user.generateToken()
+
+    res.cookie('access_token', access_token, {
+      httpOnly: true,
+      secure: true,
+      maxAge: 1000 * 60 * 15
+    })
+    res.cookie('refresh_token', refresh_token, {
+      httpOnly: true,
+      secure: true,
+      maxAge: 1000 * 60 * 60 * 24
+    })
+      .send({
+        'access_token': access_token,
+      })
+  } catch (e: any) {
+    if (e.isCustomErr) {
+      res.status(e.status).send(e)
+    } else {
+      res.status(400).send(e)
+    }
+  }
+})
+
 interface authInfoI {
   access_token: string
   refresh_token: string
@@ -47,18 +87,13 @@ authRouter.get('/login/google/callback',
     try {
       const authInfo = req.authInfo as authInfoI
 
-      req.cookies.access_token = authInfo.access_token
-      req.cookies.refresh_token = authInfo.refresh_token
-
       res
         .cookie('access_token', authInfo.access_token, {
           httpOnly: true,
-          secure: true,
           maxAge: 1000 * 60 * 15
         })
         .cookie('refresh_token', authInfo.refresh_token, {
           httpOnly: true,
-          secure: true,
           maxAge: 1000 * 60 * 60 * 24 * 7
         })
         .redirect(`${process.env.BUSINESS_WEBSITE}login`)
@@ -111,15 +146,13 @@ authRouter.get('/check', async (req, res) => {
 
 authRouter.get('/refresh_token', async (req, res) => {
   try {
-    const cookieString = req.headers.cookie
-    if (!cookieString) throw err(401, 'No cookie found')
+    const { refresh_token } = req.cookies
+    if (!refresh_token) throw err(401, 'Token not found')
 
-    const cookies = separateCookies(cookieString)
-
-    const decoded: JwtPayload = jwt.verify(cookies.refresh_token, process.env.JWT_SECRET!) as { _id: string }
+    const decoded: JwtPayload = jwt.verify(refresh_token, process.env.JWT_SECRET!) as { _id: string }
 
     const user = await User.findById(decoded._id)
-    if (!user) throw err(403, 'User not found')
+    if (!user) throw err(403, 'Invalid Credentials')
 
     const userToken = user.generateToken()
 
