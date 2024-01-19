@@ -7,13 +7,14 @@ import cors from 'cors'
 import morgan from 'morgan'
 import passport from './passport'
 import session from 'express-session'
-import cookieSession from 'cookie-session'
+import cookieParser from 'cookie-parser'
 
 
 const PORT = process.env.PORT || 5001
 const app: Application = express()
 app.use(express.json())
 app.use(express.urlencoded())
+app.use(cookieParser(process.env.SESSION_SECRET!))
 app.use(cors(
     {
         origin: ['http://localhost:3000'],

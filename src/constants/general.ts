@@ -59,7 +59,7 @@ export const handleSaveError = (error: any) => {
                 return `${key}, `
             }).join(', ') + '- already exists'
 
-        return err(400, message, error)
+        return err(409, message, error)
     } else {
         return err(500, 'Internal server error', error)
     }

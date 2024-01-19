@@ -5,13 +5,10 @@ import User from '../models/user/index.model'
 
 export async function auth(req: Request, res: Response, next: NextFunction) {
     try {
-        const cookieString = req.headers.cookie
-        if (!cookieString) throw err(401, 'No cookie found')
+        const cookies = req.cookies
+        if (!cookies['access_token']) throw err(401, 'No cookie found')
 
-        const cookies = separateCookies(cookieString)
-        if (!cookies.access_token) throw err(401, 'No access token found')
-
-        const decoded = jwt.verify(cookies.access_token, process.env.JWT_SECRET!) as { _id: string }
+        const decoded = jwt.verify(cookies['access_token'], process.env.JWT_SECRET!) as { _id: string }
         if (!decoded._id) throw err(403, 'Token not found')
 
         const user = await User.findById(decoded._id)
