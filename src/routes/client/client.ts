@@ -76,7 +76,6 @@ userRouter.post(
 userRouter.get('/information', auth, (req: Request, res: Response) => {
     const { userData } = req
 
-
     //@ts-ignore
     res.status(200).send(userData.prettyPrint())
 })

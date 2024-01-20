@@ -8,6 +8,7 @@ import morgan from 'morgan'
 import passport from './passport'
 import session from 'express-session'
 import cookieParser from 'cookie-parser'
+import mailchimp from './constants/email'
 
 
 const PORT = process.env.PORT || 5001
@@ -33,6 +34,19 @@ app.use(session({
         maxAge: 1000 * 60 * 10
     }
 }))
+
+async function main() {
+    const mcResponse = await mailchimp.users.ping()
+
+    if (mcResponse !== 'PONG!') {
+        console.log(c.red('Mailchimp connection failed'))
+        console.log(mcResponse.response.data)
+    } else {
+        console.log(c.green('Mailchimp connection established successfully'))
+    }
+}
+
+main()
 
 // app.use(cookieSession({
 //     name: 'google-auth-session',

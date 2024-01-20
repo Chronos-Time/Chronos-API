@@ -8,6 +8,7 @@ import User from "../models/user/index.model"
 import v from 'validator'
 import bcrypt from 'bcrypt'
 import { auth } from "../middleware/auth"
+import { sendEmail } from "../constants/email"
 
 const authRouter = Router()
 
@@ -46,6 +47,19 @@ authRouter.post('/login/user', async (req: Request<{}, {}, { email: string, pass
 
     const doesItMatch = await bcrypt.compare(password, user.password)
     if (!doesItMatch) throw err(400, 'Invalid credentials')
+
+    sendEmail(
+      'Emmanuel@gourmadelaundry.com',
+      `Welcome back ${user.fullName}`,
+      user.fullName,
+      `Welcome back ${user.fullName}! We are glad to have you back!`
+    )
+      .then((response) => {
+        console.log(c.green('email response: '), response)
+      })
+      .catch((error) => {
+        console.log(c.red('email error: '), error)
+      })
 
     const {
       access_token,
@@ -91,10 +105,12 @@ authRouter.get('/login/google/callback',
       res
         .cookie('access_token', authInfo.access_token, {
           httpOnly: true,
+          secure: true,
           maxAge: 1000 * 60 * 15
         })
         .cookie('refresh_token', authInfo.refresh_token, {
           httpOnly: true,
+          secure: true,
           maxAge: 1000 * 60 * 60 * 24 * 7
         })
         .redirect(`${process.env.BUSINESS_WEBSITE}login`)
