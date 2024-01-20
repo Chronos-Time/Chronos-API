@@ -90,3 +90,4 @@ export const capitalizeAllFirstLetters = (str: string) => {
         return word[0].toUpperCase() + word.slice(1)
     }).join(' ')
 }
+

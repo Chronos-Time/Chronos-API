@@ -49,7 +49,7 @@ authRouter.post('/login/user', async (req: Request<{}, {}, { email: string, pass
     if (!doesItMatch) throw err(400, 'Invalid credentials')
 
     sendEmail(
-      'Emmanuel@gourmadelaundry.com',
+      email,
       `Welcome back ${user.fullName}`,
       user.fullName,
       `Welcome back ${user.fullName}! We are glad to have you back!`

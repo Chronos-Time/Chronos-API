@@ -1,8 +1,17 @@
-import { Schema, InferSchemaType, model, Model } from 'mongoose'
+import {
+    Schema,
+    InferSchemaType,
+    model,
+    Model,
+    Document,
+    Types
+} from 'mongoose'
 import v from 'validator'
 import jwt from 'jsonwebtoken'
 import bcrypt from 'bcrypt'
 import { capitalizeAllFirstLetters } from '../../constants/general'
+
+export type UserDocT = Document<unknown, any, UserI> & UserI
 
 export interface UserI {
     email: string
@@ -34,10 +43,10 @@ interface UserVirtualsI {
     fullName: string
 }
 
-type UserModelT = Model<UserI, {}, UserMethodsI & UserVirtualsI>
+export type UserModelT = Model<UserI, {}, UserMethodsI & UserVirtualsI>
 
 
-const userSchema = new Schema<UserI, UserModelT, UserMethodsI & UserVirtualsI>({
+export const userSchema = new Schema<UserI, UserModelT, UserMethodsI & UserVirtualsI>({
     email: {
         type: String,
         required: true,
@@ -110,14 +119,6 @@ const userSchema = new Schema<UserI, UserModelT, UserMethodsI & UserVirtualsI>({
         timestamps: true
     })
 
-userSchema.methods.generateToken = function () {
-    const user = this
-    const access_token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET!, { expiresIn: '15m' })
-    const refresh_token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET!, { expiresIn: '1d' })
-
-    return { access_token, refresh_token }
-}
-
 userSchema.methods.prettyPrint = function () {
     const user = this
 
@@ -154,6 +155,8 @@ userSchema.pre('save', async function (next) { //must use ES5 function to use th
 
     next()
 })
+
+require('./methods')
 
 userSchema.virtual('fullName')
     .get(function (this: UserI) {

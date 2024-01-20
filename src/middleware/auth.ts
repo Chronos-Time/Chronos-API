@@ -1,11 +1,11 @@
 import jwt, { JwtPayload } from 'jsonwebtoken'
 import { NextFunction, Request, Response } from 'express'
 import { err, separateCookies } from '../constants/general'
-import User, { UserI, UserT } from '../models/user/index.model'
+import User, { UserDocT } from '../models/user/index.model'
 
 declare module "express-serve-static-core" {
     interface Request {
-        userData: UserI
+        userData: UserDocT
     }
 }
 

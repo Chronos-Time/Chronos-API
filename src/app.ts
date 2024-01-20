@@ -88,6 +88,7 @@ import Routes from './routes'
 
 app.use('/auth', Routes.authRouter)
 app.use('/client', Routes.clientRouter)
+app.use('/business-manager', Routes.businessManagerRouter)
 
 app.listen(PORT, () => {
     console.log('Server is running on port', c.green.inverse(PORT.toString()))
