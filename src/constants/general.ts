@@ -1,4 +1,7 @@
 import e from "express"
+import { Types } from "mongoose"
+
+export type IdI = Types.ObjectId | string
 
 /**
  * The function `err` returns an object with a status code, message, and optional error, indicating a
@@ -91,3 +94,33 @@ export const capitalizeAllFirstLetters = (str: string) => {
     }).join(' ')
 }
 
+/**
+ * It takes an array of IdI or a single IdI and returns an array of strings
+ * @param {IdI | IdI[]} ids - IdI | IdI[]
+ * @returns An array of strings.
+*/
+export const idToString = (ids: IdI | IdI[]): string[] => {
+    if (!ids) return []
+    if (!Array.isArray(ids)) return [ids.toString()]
+    return ids.map(id => id.toString())
+}
+
+/**
+ * It takes a string or an array of strings and returns an array of mongoose ObjectIds.
+ * @param {string | string[]} ids - string | string[]
+ * @returns An array of ObjectIds
+*/
+export const stringToId = (
+    ids: string | string[] | Types.ObjectId | Types.ObjectId[]
+): Types.ObjectId[] => {
+    const returnString = (id: string | Types.ObjectId) => typeof id === 'string' ? id : id.toString()
+
+    if (!Array.isArray(ids)) return [
+        new Types.ObjectId(
+            returnString(ids).length === 24 ? returnString(ids) : 24
+        )
+    ]
+    return ids.map(id => new Types.ObjectId(
+        returnString(id)
+    ))
+}
