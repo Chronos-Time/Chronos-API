@@ -3,6 +3,11 @@ import { auth } from '../../middleware/auth'
 import Business from '../../models/Business/index.model'
 import { err, handleSaveError } from '../../constants/general'
 import BusinessAdmin from '../../models/BusinessAdmin/index.model';
+import { businessPopulate, businessSelect } from './constants';
+import { model } from 'mongoose';
+import path from 'path';
+import c from 'ansi-colors';
+import Employee from '../../models/Employee/index.model';
 
 const manageRouter = Router()
 
@@ -34,10 +39,7 @@ manageRouter.post("/setup", auth, async (req: Request<{}, {}, PostBusinessI>, re
             name,
             businessType,
             businessEmail,
-            picture,
-            admins: [
-                user._id
-            ]
+            picture
         })
 
         let businessAdmin = await BusinessAdmin.findOne({
@@ -48,6 +50,8 @@ manageRouter.post("/setup", auth, async (req: Request<{}, {}, PostBusinessI>, re
                 user: user._id
             })
         }
+
+        newBusiness.admins.push(businessAdmin.id)
 
         const business = await newBusiness.save()
             .catch(e => {
@@ -79,9 +83,22 @@ manageRouter.get("/list", auth, async (req: Request, res) => {
     try {
         const user = req.userData
 
-        const businesses = await Business.find({
-            admins: { $in: user._id }
+        const admin = await BusinessAdmin.findOne({
+            user: user._id
         })
+        if (admin === null) {
+            throw err(403, 'You are not a business admin')
+        }
+
+        const businesses = await Business.find({
+            admins: { $in: admin._id }
+        }, businessSelect)
+            .populate(businessPopulate)
+            .catch(e => {
+                console.log(c.redBright('error: '), e)
+                throw err(500, 'something went wrong', e)
+            })
+
         if (businesses === null) {
             throw err(500, 'something went wrong')
         }
@@ -137,6 +154,8 @@ manageRouter.post("/update_basic/:businessId", auth, async (req: Request<{ busin
         if (updatedBusiness === null) {
             throw err(500, 'something went wrong')
         }
+
+        // ...
     } catch (e: any) {
         if (e.isCustomErr) {
             res

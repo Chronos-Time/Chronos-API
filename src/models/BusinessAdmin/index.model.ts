@@ -12,7 +12,6 @@ export type BusinessAdminDocT = Document<unknown, any, BusinessAdminI> & Busines
 
 interface BusinessAdminI {
     user: Types.ObjectId
-    userEmail: string
     businesses: Types.ObjectId[]
     activeBusinesses: Types.ObjectId[]
     metaData: {

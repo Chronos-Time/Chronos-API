@@ -103,11 +103,12 @@ const businessSchema = new Schema<BusinessI, BusinessModelT, BusinessMethodsI & 
     },
     employees: [{
         type: Schema.Types.ObjectId,
-        ref: 'Employee'
+        ref: 'Employee',
+        default: []
     }],
     admins: [{
         type: Schema.Types.ObjectId,
-        ref: 'Admin'
+        ref: 'BusinessAdmin'
     }],
     phone: {
         type: String,

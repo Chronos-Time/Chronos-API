@@ -10,6 +10,9 @@ import session from 'express-session'
 import cookieParser from 'cookie-parser'
 import mailchimp from './constants/email'
 
+//Remove later... fixes odd bug for now
+require('./models/Employee/index.model')
+
 
 const PORT = process.env.PORT || 5001
 const app: Application = express()

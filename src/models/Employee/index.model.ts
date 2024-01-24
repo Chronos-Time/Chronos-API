@@ -6,7 +6,6 @@ import { capitalizeAllFirstLetters } from '../../constants/general'
 
 interface EmployeeI {
     user: Types.ObjectId | UserT
-    employeeEmail: string
     attachedBusinesses: Types.ObjectId[] | BusinessT[]
     activelyEmployedTo: Types.ObjectId[] | BusinessT[]
     metaData: {
@@ -26,18 +25,6 @@ const employeeSchema = new Schema<EmployeeI, EmployeeModelT, EmployeeMethodsI>({
         ref: 'User',
         required: true,
         unique: true
-    },
-    employeeEmail: {
-        type: String,
-        required: true,
-        validate: {
-            validator: (value: string) => {
-                return v.isEmail(value)
-            },
-            message: (props: any) => {
-                return `${props.value} is not a valid email`
-            }
-        }
     },
     attachedBusinesses: [{
         type: Schema.Types.ObjectId,
