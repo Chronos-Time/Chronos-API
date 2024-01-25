@@ -59,9 +59,8 @@ userRouter.put('/updateBasicInfo', async (req: Request, res: Response) => {
         const validKeys = ['firstName', 'lastName']
         const isValid = validateKeys(d, validKeys)
         if (!isValid) throw err(400, 'Invalid keys')
-        const extractKeys = Object.keys(d)
 
-        extractKeys.forEach(key => d[key] || delete d[key])
+        Object.keys(d).forEach(key => d[key] || delete d[key])
 
         const user = await User.findByIdAndUpdate(userData._id, {
             ...d
