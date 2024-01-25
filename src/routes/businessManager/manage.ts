@@ -1,85 +1,23 @@
 import { Router, Request } from 'express'
 import { auth } from '../../middleware/auth'
 import Business from '../../models/Business/index.model'
-import { err, handleSaveError } from '../../constants/general'
+import { err, handleSaveError, validateKeys } from '../../constants/general'
 import BusinessAdmin from '../../models/BusinessAdmin/index.model';
 import { businessPopulate, businessSelect } from './constants';
 import { model } from 'mongoose';
 import path from 'path';
 import c from 'ansi-colors';
 import Employee from '../../models/Employee/index.model';
+import { getBusinessMid, businessAdminAuth } from '../../middleware/businessAdmin';
+import { AddressI } from '../../models/Address/index.model';
+import { addAddress } from '../../constants/location';
 
 const manageRouter = Router()
+manageRouter.use(businessAdminAuth)
+manageRouter.use('/business/:businessId', getBusinessMid)
 
-interface PostBusinessI {
-    name: string
-    businessType: string
-    businessEmail: string
-    picture?: string
-}
 
-manageRouter.post("/setup", auth, async (req: Request<{}, {}, PostBusinessI>, res) => {
-    try {
-        const user = req.userData
-        const {
-            name,
-            businessType,
-            businessEmail,
-            picture
-        } = req.body
-
-        const foundbusiness = await Business.findOne({
-            businessEmail
-        })
-        if (foundbusiness) {
-            throw err(400, 'A business already uses this email')
-        }
-
-        const newBusiness = new Business({
-            name,
-            businessType,
-            businessEmail,
-            picture
-        })
-
-        let businessAdmin = await BusinessAdmin.findOne({
-            user: user._id
-        })
-        if (businessAdmin === null) {
-            businessAdmin = new BusinessAdmin({
-                user: user._id
-            })
-        }
-
-        newBusiness.admins.push(businessAdmin.id)
-
-        const business = await newBusiness.save()
-            .catch(e => {
-                throw handleSaveError(e)
-            })
-
-        await businessAdmin.addActiveBusiness(newBusiness._id)
-            .catch(e => {
-                Business.findByIdAndDelete(business._id)
-                if (e.isCustomErr) {
-                    throw err(e.status, e.message, e.error)
-                }
-                throw err(500, 'something went wrong', e)
-            })
-
-        res.send(business)
-    } catch (e: any) {
-        if (e.isCustomErr) {
-            res
-                .status(e.status)
-                .send(e.error || e)
-        } else {
-            res.send(e)
-        }
-    }
-})
-
-manageRouter.get("/list", auth, async (req: Request, res) => {
+manageRouter.get("/list", async (req: Request, res) => {
     try {
         const user = req.userData
 
@@ -119,7 +57,6 @@ interface UpdateBusinessI {
     name?: string
     description?: string
     phone?: string
-    email?: string
     website?: string
     images?: string[]
     socials?: {
@@ -131,31 +68,78 @@ interface UpdateBusinessI {
     }
 }
 
-manageRouter.post("/update_basic/:businessId", auth, async (req: Request<{ businessId: string }, {}, UpdateBusinessI>, res) => {
+manageRouter.get("/business/:businessId", async (req: Request<{}, {}, {}>, res) => {
     try {
-        const user = req.userData
-        const businessId = req.params.businessId
+        res.status(200).send(req.business)
+    } catch (e: any) {
+        res.status(500).send(e)
+    }
+})
+
+manageRouter.post("/business/:businessId/update_basic", async (req: Request<{ businessId: string }, {}, UpdateBusinessI>, res) => {
+    try {
+        const business = req.business
         const update = req.body
 
-        const business = await Business.findOne({
-            _id: businessId,
-            admins: { $in: user._id }
-        })
-        if (business === null) {
-            throw err(404, 'business not found')
+        const allowedUpdates = ['name', 'description', 'phone', 'email', 'website', 'images', 'socials']
+
+        if (!validateKeys(update, allowedUpdates)) {
+            throw err(400, 'Invalid body')
         }
 
-        const updatedBusiness = await Business.findOneAndUpdate({
-            _id: businessId,
-            admins: { $in: user._id }
-        }, update, {
-            new: true
-        })
-        if (updatedBusiness === null) {
-            throw err(500, 'something went wrong')
+        Object.assign(business, update)
+        const updatedBusiness = await business.save()
+            .catch(e => {
+                throw handleSaveError(e)
+            })
+
+        res.status(200).send(updatedBusiness)
+    } catch (e: any) {
+        if (e.isCustomErr) {
+            res
+                .status(e.status)
+                .send(e.error || e)
+        } else {
+            res.send(e)
+        }
+    }
+})
+
+interface UpdateAddressI extends AddressI {
+    placeId: undefined
+    formatted: undefined
+}
+
+manageRouter.post("/business/:businessId/update_address", async (req: Request<{ businessId: string }, {}, UpdateBusinessI>, res) => {
+    try {
+        const business = req.business
+        const update = req.body
+
+        const allowedUpdates = [
+            'street_address_line_1',
+            'street_address_line_2',
+            'city',
+            'state',
+            'zipcode',
+            'country'
+        ]
+
+        if (!validateKeys(update, allowedUpdates)) {
+            throw err(400, 'Invalid body')
         }
 
-        // ...
+        const address = await addAddress(update as AddressI)
+            .catch(e => {
+                throw err(400, 'unable to add address')
+            })
+
+        business.address = address._id
+        const updatedBusiness = await business.save()
+            .catch(e => {
+                throw handleSaveError(e)
+            })
+
+        res.status(200).send(updatedBusiness)
     } catch (e: any) {
         if (e.isCustomErr) {
             res

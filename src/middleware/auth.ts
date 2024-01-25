@@ -2,6 +2,7 @@ import jwt, { JwtPayload } from 'jsonwebtoken'
 import { NextFunction, Request, Response } from 'express'
 import { err, separateCookies } from '../constants/general'
 import User, { UserDocT } from '../models/user/index.model'
+import BusinessAdmin, { BusinessAdminDocT } from '../models/BusinessAdmin/index.model'
 
 declare module "express-serve-static-core" {
     interface Request {

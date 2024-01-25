@@ -37,5 +37,9 @@ export const businessPopulate = [
             path: 'user',
             select: userSelect
         }
+    },
+    {
+        path: 'address',
+        model: 'Address',
     }
 ]

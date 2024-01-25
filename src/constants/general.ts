@@ -124,3 +124,21 @@ export const stringToId = (
         returnString(id)
     ))
 }
+
+/**
+ * The function `validateKeys` checks if all the keys in an object are included in a given array of
+ * allowed keys.
+ * @param obj - An object with string keys and any values.
+ * @param {string[]} allowedKeys - The `allowedKeys` parameter is an array of strings that represents
+ * the keys that are allowed in the `obj` parameter.
+ * @returns The function `validateKeys` returns a boolean value if keys are valid.
+ */
+export const validateKeys = (obj: { [keys: string]: any }, allowedKeys: string[]) => {
+    try {
+        const keys = Object.keys(obj)
+        if (keys.length === 0) throw 'invalid object'
+        return keys.every(key => allowedKeys.includes(key))
+    } catch {
+        return false
+    }
+}

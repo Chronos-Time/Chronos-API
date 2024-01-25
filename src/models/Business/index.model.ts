@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken'
 import bcrypt from 'bcrypt'
 import { capitalizeAllFirstLetters } from '../../constants/general'
 import { UserT } from '../user/index.model'
+import { AddressI } from '../Address/index.model'
 
 export type BusinessDocT = Document<unknown, any, BusinessI> & BusinessI
 
@@ -15,6 +16,7 @@ export interface BusinessI {
     picture?: string
     employees: Types.ObjectId[] | UserT[]
     admins: Types.ObjectId[] | UserT[]
+    address: Types.ObjectId | AddressI
     phone: string
     website: string
     images: string[]
@@ -117,6 +119,10 @@ const businessSchema = new Schema<BusinessI, BusinessModelT, BusinessMethodsI & 
     website: {
         type: String,
         default: ''
+    },
+    address: {
+        type: Schema.Types.ObjectId,
+        ref: 'Address'
     },
     socials: {
         facebook: {

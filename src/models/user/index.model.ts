@@ -137,15 +137,15 @@ userSchema.methods.prettyPrint = function () {
 userSchema.pre('save', async function (next) { //must use ES5 function to use the "this" binding
     const user = this // "this" is in reverence to userSchema
 
-    if (user.isModified('firstName')) {
+    if (user.isModified('firstName') && user.firstName) {
         user.firstName = user.firstName.toLowerCase()
     }
 
-    if (user.isModified('lastName')) {
+    if (user.isModified('lastName') && user.lastName) {
         user.lastName = user.lastName.toLowerCase()
     }
 
-    if (user.isModified('email')) {
+    if (user.isModified('email') && user.email) {
         user.email = user.email.toLowerCase()
     }
 
