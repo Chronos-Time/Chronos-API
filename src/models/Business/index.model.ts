@@ -13,6 +13,7 @@ export interface BusinessI {
     logo: string
     businessType: string
     businessEmail: string
+    description: string
     picture?: string
     employees: Types.ObjectId[] | UserT[]
     admins: Types.ObjectId[] | UserT[]
@@ -68,6 +69,11 @@ const businessSchema = new Schema<BusinessI, BusinessModelT, BusinessMethodsI & 
                 return `${props.value} is not a valid url`
             }
         }
+    },
+    description: {
+        type: String,
+        required: false,
+        default: ''
     },
     images: [{
         type: String,

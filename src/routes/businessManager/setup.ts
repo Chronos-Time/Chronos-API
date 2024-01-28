@@ -11,6 +11,7 @@ interface PostBusinessI {
     name: string
     businessType: string
     businessEmail: string
+    description: string
     picture?: string
 }
 
@@ -21,7 +22,8 @@ SetupRouter.post("/setup", async (req: Request<{}, {}, PostBusinessI>, res) => {
             name,
             businessType,
             businessEmail,
-            picture
+            picture,
+            description
         } = req.body
 
         const foundbusiness = await Business.findOne({
@@ -35,7 +37,8 @@ SetupRouter.post("/setup", async (req: Request<{}, {}, PostBusinessI>, res) => {
             name,
             businessType,
             businessEmail,
-            picture
+            picture,
+            description: description,
         })
 
         let businessAdmin = await BusinessAdmin.findOne({

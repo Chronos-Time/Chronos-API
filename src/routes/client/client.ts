@@ -53,7 +53,6 @@ interface UpdateBasicInfoI {
 
 userRouter.put('/updateBasicInfo', async (req: Request, res: Response) => {
     try {
-        const { userData } = req
         const d = req.body
 
         const validKeys = ['firstName', 'lastName']
@@ -62,7 +61,7 @@ userRouter.put('/updateBasicInfo', async (req: Request, res: Response) => {
 
         Object.keys(d).forEach(key => d[key] || delete d[key])
 
-        const user = await User.findByIdAndUpdate(userData._id, {
+        const user = await User.findByIdAndUpdate(req.userData._id, {
             ...d
         }, {
             new: true
