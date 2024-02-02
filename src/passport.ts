@@ -43,19 +43,27 @@ Passport.use(
             .catch((error) => { throw handleSaveError(error) })
           return done(null, profile)
         }
-        //if user exists, update googleId if they are different
-        else if (user.google?.googleId !== googleId && user.google) {
+
+        let update = false
+
+        if (user.google?.googleId !== googleId && user.google) {
           user.google.googleId = googleId
-          user.save()
-            .catch((error) => { throw handleSaveError(error) })
+          update = true
         }
 
         //if user exists, update accessToken if it is different
         if (user.google?.accessToken !== accessToken && user.google) {
           user.google.accessToken = accessToken
-          user.save()
-            .catch((error) => { throw handleSaveError(error) })
+          update = true
         }
+
+        if (!user.picture && user.google && picture) {
+          user.picture = picture
+          update = true
+        }
+
+        update && user.save()
+          .catch((error) => { throw handleSaveError(error) })
 
         const userToken = user.generateToken()
 

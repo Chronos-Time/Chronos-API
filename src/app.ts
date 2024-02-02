@@ -8,6 +8,10 @@ import morgan from 'morgan'
 import passport from './passport'
 import session from 'express-session'
 import cookieParser from 'cookie-parser'
+import mailchimp from './constants/email'
+
+//Remove later... fixes odd bug for now
+require('./models/Employee/index.model')
 
 
 const PORT = process.env.PORT || 5001
@@ -33,6 +37,19 @@ app.use(session({
         maxAge: 1000 * 60 * 10
     }
 }))
+
+async function main() {
+    const mcResponse = await mailchimp.users.ping()
+
+    if (mcResponse !== 'PONG!') {
+        console.log(c.red('Mailchimp connection failed'))
+        console.log(mcResponse.response.data)
+    } else {
+        console.log(c.green('Mailchimp connection established successfully'))
+    }
+}
+
+main()
 
 // app.use(cookieSession({
 //     name: 'google-auth-session',
@@ -74,6 +91,7 @@ import Routes from './routes'
 
 app.use('/auth', Routes.authRouter)
 app.use('/client', Routes.clientRouter)
+app.use('/business-manager', Routes.businessManagerRouter)
 
 app.listen(PORT, () => {
     console.log('Server is running on port', c.green.inverse(PORT.toString()))

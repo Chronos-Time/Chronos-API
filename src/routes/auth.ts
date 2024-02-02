@@ -7,6 +7,8 @@ import jwt, { JwtPayload } from "jsonwebtoken"
 import User from "../models/user/index.model"
 import v from 'validator'
 import bcrypt from 'bcrypt'
+import { auth } from "../middleware/auth"
+import { sendEmail } from "../constants/email"
 
 const authRouter = Router()
 
@@ -45,6 +47,19 @@ authRouter.post('/login/user', async (req: Request<{}, {}, { email: string, pass
 
     const doesItMatch = await bcrypt.compare(password, user.password)
     if (!doesItMatch) throw err(400, 'Invalid credentials')
+
+    // sendEmail(
+    //   email,
+    //   `Welcome back ${user.fullName}`,
+    //   user.fullName,
+    //   `Welcome back ${user.fullName}! We are glad to have you back!`
+    // )
+    //   .then((response) => {
+    //     console.log(c.green('email response: '), response)
+    //   })
+    //   .catch((error) => {
+    //     console.log(c.red('email error: '), error)
+    //   })
 
     const {
       access_token,
@@ -90,10 +105,12 @@ authRouter.get('/login/google/callback',
       res
         .cookie('access_token', authInfo.access_token, {
           httpOnly: true,
+          secure: true,
           maxAge: 1000 * 60 * 15
         })
         .cookie('refresh_token', authInfo.refresh_token, {
           httpOnly: true,
+          secure: true,
           maxAge: 1000 * 60 * 60 * 24 * 7
         })
         .redirect(`${process.env.BUSINESS_WEBSITE}login`)
@@ -154,9 +171,20 @@ authRouter.get('/refresh_token', async (req, res) => {
     const user = await User.findById(decoded._id)
     if (!user) throw err(403, 'Invalid Credentials')
 
-    const userToken = user.generateToken()
+    const tokenData = user.generateToken()
 
-    res.send({ 'access_token': userToken.access_token })
+    res.cookie('access_token', tokenData.access_token, {
+      httpOnly: true,
+      secure: true,
+      maxAge: 1000 * 60 * 15
+    })
+    res.cookie('refresh_token', tokenData.refresh_token, {
+      httpOnly: true,
+      secure: true,
+      maxAge: 1000 * 60 * 60 * 24
+    })
+
+    res.send({ 'access_token': tokenData.access_token })
   } catch (e: any) {
     if (e.isCustomErr) {
       res.status(e.status).send(e)
@@ -169,6 +197,13 @@ authRouter.get('/refresh_token', async (req, res) => {
       res.status(403).send(e)
     }
   }
+})
+
+authRouter.get('/logout', auth, (req, res) => {
+
+  res.clearCookie('access_token')
+  res.clearCookie('refresh_token')
+  res.send('Logged out')
 })
 
 export default authRouter

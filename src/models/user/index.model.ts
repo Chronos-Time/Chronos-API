@@ -1,20 +1,19 @@
-import { Schema, InferSchemaType, model, Model } from 'mongoose'
+import {
+    Schema,
+    InferSchemaType,
+    model,
+    Model,
+    Document,
+    Types
+} from 'mongoose'
 import v from 'validator'
 import jwt from 'jsonwebtoken'
 import bcrypt from 'bcrypt'
+import { capitalizeAllFirstLetters } from '../../constants/general'
 
-interface UserMethodsI {
-    generateToken: () => {
-        access_token: string
-        refresh_token: string
-    }
-}
+export type UserDocT = Document<unknown, any, UserI> & UserI
 
-interface UserVirtualsI {
-    fullName: string
-}
-
-interface UserI {
+export interface UserI {
     email: string
     password: string
     firstName: string
@@ -30,11 +29,24 @@ interface UserI {
         refreshToken: string
     }
 }
+interface UserMethodsI {
+    generateToken: () => {
+        access_token: string
+        refresh_token: string
+    }
+    prettyPrint(): {
+        [key: string]: any
+    }
+}
 
-type UserModelT = Model<UserI, {}, UserMethodsI & UserVirtualsI>
+interface UserVirtualsI {
+    fullName: string
+}
+
+export type UserModelT = Model<UserI, {}, UserMethodsI & UserVirtualsI>
 
 
-const userSchema = new Schema<UserI, UserModelT, UserMethodsI & UserVirtualsI>({
+export const userSchema = new Schema<UserI, UserModelT, UserMethodsI & UserVirtualsI>({
     email: {
         type: String,
         required: true,
@@ -107,26 +119,33 @@ const userSchema = new Schema<UserI, UserModelT, UserMethodsI & UserVirtualsI>({
         timestamps: true
     })
 
-userSchema.methods.generateToken = function () {
+userSchema.methods.prettyPrint = function () {
     const user = this
-    const access_token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET!, { expiresIn: '15m' })
-    const refresh_token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET!, { expiresIn: '1d' })
 
-    return { access_token, refresh_token }
+    const userObject = user.toObject({ virtuals: true })
+
+    userObject.firstName = capitalizeAllFirstLetters(userObject.firstName)
+    userObject.lastName = capitalizeAllFirstLetters(userObject.lastName)
+
+    delete userObject.password
+    delete userObject.auth
+    delete userObject.google
+
+    return userObject
 }
 
 userSchema.pre('save', async function (next) { //must use ES5 function to use the "this" binding
     const user = this // "this" is in reverence to userSchema
 
-    if (user.isModified('firstName')) {
+    if (user.isModified('firstName') && user.firstName) {
         user.firstName = user.firstName.toLowerCase()
     }
 
-    if (user.isModified('lastName')) {
+    if (user.isModified('lastName') && user.lastName) {
         user.lastName = user.lastName.toLowerCase()
     }
 
-    if (user.isModified('email')) {
+    if (user.isModified('email') && user.email) {
         user.email = user.email.toLowerCase()
     }
 
@@ -137,9 +156,11 @@ userSchema.pre('save', async function (next) { //must use ES5 function to use th
     next()
 })
 
+require('./methods')
+
 userSchema.virtual('fullName')
     .get(function (this: UserI) {
-        return `${this.firstName} ${this.lastName}`
+        return capitalizeAllFirstLetters(`${this.firstName} ${this.lastName}`)
     })
     .set(function (this: UserI, value: string) {
         const [firstName, lastName] = value.split(' ')
