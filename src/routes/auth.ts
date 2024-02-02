@@ -48,18 +48,18 @@ authRouter.post('/login/user', async (req: Request<{}, {}, { email: string, pass
     const doesItMatch = await bcrypt.compare(password, user.password)
     if (!doesItMatch) throw err(400, 'Invalid credentials')
 
-    sendEmail(
-      email,
-      `Welcome back ${user.fullName}`,
-      user.fullName,
-      `Welcome back ${user.fullName}! We are glad to have you back!`
-    )
-      .then((response) => {
-        console.log(c.green('email response: '), response)
-      })
-      .catch((error) => {
-        console.log(c.red('email error: '), error)
-      })
+    // sendEmail(
+    //   email,
+    //   `Welcome back ${user.fullName}`,
+    //   user.fullName,
+    //   `Welcome back ${user.fullName}! We are glad to have you back!`
+    // )
+    //   .then((response) => {
+    //     console.log(c.green('email response: '), response)
+    //   })
+    //   .catch((error) => {
+    //     console.log(c.red('email error: '), error)
+    //   })
 
     const {
       access_token,

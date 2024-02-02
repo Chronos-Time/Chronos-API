@@ -191,11 +191,11 @@ const businessSchema = new Schema<BusinessI, BusinessModelT, BusinessMethodsI & 
     timestamps: true
 })
 
-businessSchema.pre('save', async function (next) { //must use ES5 function to use the "this" binding
+businessSchema.pre('save', async function (next) {
     const business = this // "this" is in reverence to userSchema
 
     if (business.isModified('name')) {
-        business.name = capitalizeAllFirstLetters(business.name)
+
     }
 
     if (business.isModified('businessEmail')) {
