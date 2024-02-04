@@ -3,7 +3,16 @@ import { Document, Types } from 'mongoose'
 import _ from 'lodash'
 import { Client, GeocodeResponse, GeocodeResponseData, TravelMode, TravelRestriction, UnitSystem } from "@googlemaps/google-maps-services-js"
 
-export type coordinatesT = [number, number]
+export type coordinatesT = [
+    /**
+     * Longitude
+     */
+    number,
+    /**
+     * Latitude
+     */
+    number
+]
 export const maps = new Client({})
 
 type addyI = Document<unknown, any, AddressI> & AddressI & {
@@ -79,6 +88,8 @@ export const geoHandleAddress = async (address: AddressI) => {
         },
     })
         .then(res => res.data)
+
+    console.log('geo data', originAddress)
 
     return originAddress
 

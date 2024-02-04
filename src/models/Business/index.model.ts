@@ -8,6 +8,93 @@ import { AddressI } from '../Address/index.model'
 
 export type BusinessDocT = Document<unknown, any, BusinessI> & BusinessI
 
+export type BusinessHoursT = [
+    {
+        name: 'Sunday',
+        hour: {
+            type: Number,
+            start: {
+                default: 18
+            },
+            end: {
+                default: 34
+            }
+        }
+    },
+    {
+        name: 'Monday',
+        hour: {
+            type: Number,
+            start: {
+                default: 18
+            },
+            end: {
+                default: 34
+            }
+        }
+    },
+    {
+        name: 'Tuesday',
+        hour: {
+            type: Number,
+            start: {
+                default: 18
+            },
+            end: {
+                default: 34
+            }
+        }
+    },
+    {
+        name: 'Wednesday',
+        hour: {
+            type: Number,
+            start: {
+                default: 18
+            },
+            end: {
+                default: 34
+            }
+        }
+    },
+    {
+        name: 'Thursday',
+        hour: {
+            type: Number,
+            start: {
+                default: 18
+            },
+            end: {
+                default: 34
+            }
+        }
+    },
+    {
+        name: 'Friday',
+        hour: {
+            type: Number,
+            start: {
+                default: 18
+            },
+            end: {
+                default: 34
+            }
+        }
+    },
+    {
+        name: 'Saturday',
+        hour: {
+            type: Number,
+            start: {
+                default: 18
+            },
+            end: {
+                default: 34
+            }
+        }
+    },
+]
+
 export interface BusinessI {
     name: string
     logo: string
@@ -32,19 +119,13 @@ export interface BusinessI {
         youtube?: string
         linkedin?: string
     }
+    businessHours: BusinessHoursT
     // EIN: string
-    // address: Types.ObjectId | AddressI
     // jobModules: Types.ObjectId[] | JobModuleT[]
 }
 
-interface BusinessMethodsI {
-    generateToken: () => {
-        access_token: string
-        refresh_token: string
-    }
-    prettyPrint(): {
-        [key: string]: any
-    }
+export interface BusinessMethodsI {
+    updateBusinessHours: (hours: BusinessHoursT) => Promise<BusinessDocT>
 }
 
 interface BusinessVirtualsI {
@@ -54,7 +135,7 @@ interface BusinessVirtualsI {
 type BusinessModelT = Model<BusinessI, {}, BusinessMethodsI & BusinessVirtualsI>
 
 
-const businessSchema = new Schema<BusinessI, BusinessModelT, BusinessMethodsI & BusinessVirtualsI>({
+export const businessSchema = new Schema<BusinessI, BusinessModelT, BusinessMethodsI & BusinessVirtualsI>({
     name: {
         type: String,
         required: true
@@ -186,7 +267,114 @@ const businessSchema = new Schema<BusinessI, BusinessModelT, BusinessMethodsI & 
                 }
             }
         }
-    }
+    },
+    businessHours: [
+        {
+            name: {
+                type: String,
+                default: 'Sunday'
+            },
+            hour: {
+                type: Number,
+                start: {
+                    default: 18
+                },
+                end: {
+                    default: 34
+                }
+            }
+        },
+        {
+            name: {
+                type: String,
+                default: 'Monday'
+            },
+            hour: {
+                type: Number,
+                start: {
+                    default: 18
+                },
+                end: {
+                    default: 34
+                }
+            }
+        },
+        {
+            name: {
+                type: String,
+                default: 'Tuesday'
+            },
+            hour: {
+                type: Number,
+                start: {
+                    default: 18
+                },
+                end: {
+                    default: 34
+                }
+            }
+        },
+        {
+            name: {
+                type: String,
+                default: 'Wednesday'
+            },
+            hour: {
+                type: Number,
+                start: {
+                    default: 18
+                },
+                end: {
+                    default: 34
+                }
+            }
+        },
+        {
+            name: {
+                type: String,
+                default: 'Thursday'
+            },
+            hour: {
+                type: Number,
+                start: {
+                    default: 18
+                },
+                end: {
+                    default: 34
+                }
+            }
+        },
+        {
+            name: {
+                type: String,
+                default: 'Friday'
+            },
+            hour: {
+                type: Number,
+                start: {
+                    default: 18
+                },
+                end: {
+                    default: 34
+                }
+            }
+        },
+        {
+            name: {
+                type: String,
+                default: 'Saturday'
+            },
+            hour: {
+                type: Number,
+                start: {
+                    default: 18
+                },
+                end: {
+                    default: 34
+                }
+            }
+        }
+    ],
 }, {
     timestamps: true
 })
@@ -206,6 +394,8 @@ businessSchema.pre('save', async function (next) {
 
     next()
 })
+
+require('./methods')
 
 export type BusinessT = InferSchemaType<typeof businessSchema>
 

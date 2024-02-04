@@ -1,6 +1,6 @@
 import { Router, Request } from 'express'
 import { auth } from '../../middleware/auth'
-import Business from '../../models/Business/index.model'
+import Business, { BusinessHoursT } from '../../models/Business/index.model'
 import { err, handleSaveError, validateKeys } from '../../constants/general'
 import BusinessAdmin from '../../models/BusinessAdmin/index.model';
 import { businessPopulate, businessSelect } from './constants';
@@ -140,6 +140,26 @@ manageRouter.post("/business/:businessId/update_address", async (req: Request<{ 
             })
 
         res.status(200).send(updatedBusiness)
+    } catch (e: any) {
+        if (e.isCustomErr) {
+            res
+                .status(e.status)
+                .send(e.error || e)
+        } else {
+            res.send(e)
+        }
+    }
+})
+
+
+manageRouter.post("/business/:businessId/update_address", async (req: Request<{ businessId: string }, {}, { hours: BusinessHoursT }>, res) => {
+    try {
+        const business = req.business
+        const update = req.body
+
+
+
+        res.status(200).send(business)
     } catch (e: any) {
         if (e.isCustomErr) {
             res

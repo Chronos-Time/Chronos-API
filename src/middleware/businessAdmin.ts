@@ -2,15 +2,16 @@ import { NextFunction, Request, Response } from 'express'
 import jwt from 'jsonwebtoken'
 import { err } from '../constants/general'
 import BusinessAdmin, { BusinessAdminDocT } from '../models/BusinessAdmin/index.model'
-import Business from '../models/Business/index.model'
+import Business, { BusinessT } from '../models/Business/index.model'
 import { businessPopulate, businessSelect } from '../routes/businessManager/constants'
 import { BusinessDocT } from '../models/Business/index.model';
+
 
 
 declare module "express-serve-static-core" {
     interface Request {
         businessAdmin: BusinessAdminDocT
-        business: BusinessDocT
+        business: BusinessDocT & BusinessT
     }
 }
 
@@ -61,6 +62,8 @@ export const getBusinessMid = async (req: Request<{ businessId: string }, {}, {}
         if (!business) throw err(404, 'Business not found')
 
         req.business = business
+
+        business.updateBusinessHours
 
         next()
     } catch (err: any) {
