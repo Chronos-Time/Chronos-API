@@ -15,7 +15,9 @@ businessSchema.methods.updateBusinessHours = async function (
 
         business.businessHours = hours
 
-        await business.save()
+        await business.save().catch(e => {
+            throw err(400, 'unable to save business hours', e)
+        })
         return business
     } catch (e: any) {
         return e

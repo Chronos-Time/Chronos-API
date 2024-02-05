@@ -1,16 +1,12 @@
 import { Router, Request } from 'express'
-import { auth } from '../../middleware/auth'
 import Business, { BusinessHoursT } from '../../models/Business/index.model'
 import { err, handleSaveError, validateKeys } from '../../constants/general'
-import BusinessAdmin from '../../models/BusinessAdmin/index.model';
-import { businessPopulate, businessSelect } from './constants';
-import { model } from 'mongoose';
-import path from 'path';
-import c from 'ansi-colors';
-import Employee from '../../models/Employee/index.model';
-import { getBusinessMid, businessAdminAuth } from '../../middleware/businessAdmin';
-import { AddressI } from '../../models/Address/index.model';
-import { addAddress } from '../../constants/location';
+import BusinessAdmin from '../../models/BusinessAdmin/index.model'
+import { businessPopulate, businessSelect } from './constants'
+import c from 'ansi-colors'
+import { getBusinessMid, businessAdminAuth } from '../../middleware/businessAdmin'
+import { AddressI } from '../../models/Address/index.model'
+import { addAddress } from '../../constants/location'
 
 const manageRouter = Router()
 manageRouter.use(businessAdminAuth)
@@ -152,14 +148,14 @@ manageRouter.post("/business/:businessId/update_address", async (req: Request<{ 
 })
 
 
-manageRouter.post("/business/:businessId/update_address", async (req: Request<{ businessId: string }, {}, { hours: BusinessHoursT }>, res) => {
+manageRouter.post("/business/:businessId/set_business_hours", async (req: Request<{ businessId: string }, {}, { hours: BusinessHoursT }>, res) => {
     try {
         const business = req.business
-        const update = req.body
+        const { hours } = req.body
 
+        const updatedBusiness = await business.updateBusinessHours(hours)
 
-
-        res.status(200).send(business)
+        res.status(200).send(updatedBusiness)
     } catch (e: any) {
         if (e.isCustomErr) {
             res

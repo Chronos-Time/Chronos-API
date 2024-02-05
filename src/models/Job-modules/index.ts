@@ -1,5 +1,8 @@
-import { Schema, InferSchemaType, model, Types, Model } from 'mongoose'
+import { Schema, InferSchemaType, model, Types, Model, Document } from 'mongoose'
 import { TimeI } from '../../constants/time'
+import { BusinessHoursT } from '../Business/index.model'
+
+export type JobModuleDocT = Document<unknown, any, JobModuleI> & JobModuleI
 
 interface JobModuleI {
     name: string
@@ -37,113 +40,7 @@ interface JobModuleI {
      * defaults to the Businesses working hours
      * but can be updated by data
      */
-    customHours: [
-        {
-            name: {
-                type: String,
-                default: 'Sunday'
-            },
-            hour: {
-                type: Number,
-                start: {
-                    default: 18
-                },
-                end: {
-                    default: 34
-                }
-            }
-        },
-        {
-            name: {
-                type: String,
-                default: 'Monday'
-            },
-            hour: {
-                type: Number,
-                start: {
-                    default: 18
-                },
-                end: {
-                    default: 34
-                }
-            }
-        },
-        {
-            name: {
-                type: String,
-                default: 'Tuesday'
-            },
-            hour: {
-                type: Number,
-                start: {
-                    default: 18
-                },
-                end: {
-                    default: 34
-                }
-            }
-        },
-        {
-            name: {
-                type: String,
-                default: 'Wednesday'
-            },
-            hour: {
-                type: Number,
-                start: {
-                    default: 18
-                },
-                end: {
-                    default: 34
-                }
-            }
-        },
-        {
-            name: {
-                type: String,
-                default: 'Thursday'
-            },
-            hour: {
-                type: Number,
-                start: {
-                    default: 18
-                },
-                end: {
-                    default: 34
-                }
-            }
-        },
-        {
-            name: {
-                type: String,
-                default: 'Friday'
-            },
-            hour: {
-                type: Number,
-                start: {
-                    default: 18
-                },
-                end: {
-                    default: 34
-                }
-            }
-        },
-        {
-            name: {
-                type: String,
-                default: 'Saturday'
-            },
-            hour: {
-                type: Number,
-                start: {
-                    default: 18
-                },
-                end: {
-                    default: 34
-                }
-            }
-        }
-    ]
+    customHours: BusinessHoursT
 
     //day 2:
     /*
@@ -184,89 +81,131 @@ const jobModuleSchema = new Schema<JobModuleI, JobModuleModelT, JobModuleMethods
     },
     customHours: [
         {
-            name: 'Sunday',
-            hour: {
+            name: {
+                type: String,
+                default: 'Sunday'
+            },
+            start: {
                 type: Number,
-                start: {
-                    default: 18
-                },
-                end: {
-                    default: 34
-                }
+                default: 18
+            },
+            end: {
+                type: Number,
+                default: 34
+            },
+            isClosed: {
+                type: Boolean,
+                default: false
             }
         },
         {
-            name: 'Monday',
-            hour: {
+            name: {
+                type: String,
+                default: 'Monday'
+            },
+            start: {
                 type: Number,
-                start: {
-                    default: 18
-                },
-                end: {
-                    default: 34
-                }
+                default: 18
+            },
+            end: {
+                type: Number,
+                default: 34
+            },
+            isClosed: {
+                type: Boolean,
+                default: false
             }
         },
         {
-            name: 'Tuesday',
-            hour: {
+            name: {
+                type: String,
+                default: 'Tuesday'
+            },
+            start: {
                 type: Number,
-                start: {
-                    default: 18
-                },
-                end: {
-                    default: 34
-                }
+                default: 18
+            },
+            end: {
+                type: Number,
+                default: 34
+            },
+            isClosed: {
+                type: Boolean,
+                default: false
             }
         },
         {
-            name: 'Wednesday',
-            hour: {
+            name: {
+                type: String,
+                default: 'Wednesday'
+            },
+            start: {
                 type: Number,
-                start: {
-                    default: 18
-                },
-                end: {
-                    default: 34
-                }
+                default: 18
+            },
+            end: {
+                type: Number,
+                default: 34
+            },
+            isClosed: {
+                type: Boolean,
+                default: false
             }
         },
         {
-            name: 'Thursday',
-            hour: {
+            name: {
+                type: String,
+                default: 'Thursday'
+            },
+            start: {
                 type: Number,
-                start: {
-                    default: 18
-                },
-                end: {
-                    default: 34
-                }
+                default: 18
+            },
+            end: {
+                type: Number,
+                default: 34
+            },
+            isClosed: {
+                type: Boolean,
+                default: false
             }
         },
         {
-            name: 'Friday',
-            hour: {
+            name: {
+                type: String,
+                default: 'Friday'
+            },
+            start: {
                 type: Number,
-                start: {
-                    default: 18
-                },
-                end: {
-                    default: 34
-                }
+                default: 18
+            },
+            end: {
+                type: Number,
+                default: 34
+            },
+            isClosed: {
+                type: Boolean,
+                default: false
             }
         },
         {
-            name: 'Saturday',
-            hour: {
+            name: {
+                type: String,
+                default: 'Saturday'
+            },
+            start: {
                 type: Number,
-                start: {
-                    default: 18
-                },
-                end: {
-                    default: 34
-                }
+                default: 18
+            },
+            end: {
+                type: Number,
+                default: 34
+            },
+            isClosed: {
+                type: Boolean,
+                default: false
             }
-        },
+        }
     ],
     unavaiability: [{
         start: {
@@ -282,6 +221,53 @@ const jobModuleSchema = new Schema<JobModuleI, JobModuleModelT, JobModuleMethods
 
 jobModuleSchema.pre('save', async function (next) {
     const jobModule = this
+
+    if (!jobModule.customHours.length) {
+        jobModule.customHours = [
+            {
+                name: 'Sunday',
+                start: 18,
+                end: 34,
+                isClosed: false
+            },
+            {
+                name: 'Monday',
+                start: 18,
+                end: 34,
+                isClosed: false
+            },
+            {
+                name: 'Tuesday',
+                start: 18,
+                end: 34,
+                isClosed: false
+            },
+            {
+                name: 'Wednesday',
+                start: 18,
+                end: 34,
+                isClosed: false
+            },
+            {
+                name: 'Thursday',
+                start: 18,
+                end: 34,
+                isClosed: false
+            },
+            {
+                name: 'Friday',
+                start: 18,
+                end: 34,
+                isClosed: false
+            },
+            {
+                name: 'Saturday',
+                start: 18,
+                end: 34,
+                isClosed: false
+            },
+        ]
+    }
 
     next()
 })

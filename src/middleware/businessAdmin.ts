@@ -5,13 +5,15 @@ import BusinessAdmin, { BusinessAdminDocT } from '../models/BusinessAdmin/index.
 import Business, { BusinessT } from '../models/Business/index.model'
 import { businessPopulate, businessSelect } from '../routes/businessManager/constants'
 import { BusinessDocT } from '../models/Business/index.model';
+import JobModule, { JobModuleDocT } from '../models/Job-modules'
 
 
 
 declare module "express-serve-static-core" {
     interface Request {
         businessAdmin: BusinessAdminDocT
-        business: BusinessDocT & BusinessT
+        business: BusinessDocT
+        jobModules: JobModuleDocT[]
     }
 }
 
@@ -64,6 +66,20 @@ export const getBusinessMid = async (req: Request<{ businessId: string }, {}, {}
         req.business = business
 
         business.updateBusinessHours
+
+        next()
+    } catch (err: any) {
+        res.status(err.status).send(err)
+    }
+}
+
+export const getJobModules = async (req: Request<{ businessId: string }, {}, {}>, res: Response, next: NextFunction) => {
+    try {
+        const jobModules = await JobModule.find({
+            business: req.business._id
+        })
+
+        req.jobModules = jobModules
 
         next()
     } catch (err: any) {

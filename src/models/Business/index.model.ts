@@ -1,8 +1,5 @@
 import { Schema, InferSchemaType, model, Model, Mongoose, Types, Document } from 'mongoose'
 import v from 'validator'
-import jwt from 'jsonwebtoken'
-import bcrypt from 'bcrypt'
-import { capitalizeAllFirstLetters } from '../../constants/general'
 import { UserT } from '../user/index.model'
 import { AddressI } from '../Address/index.model'
 
@@ -10,92 +7,50 @@ export type BusinessDocT = Document<unknown, any, BusinessI> & BusinessI
 
 export type BusinessHoursT = [
     {
-        name: 'Sunday',
-        hour: {
-            type: Number,
-            start: {
-                default: 18
-            },
-            end: {
-                default: 34
-            }
-        }
+        name: 'Sunday'
+        start: number
+        end: number
+        isClosed: boolean
     },
     {
-        name: 'Monday',
-        hour: {
-            type: Number,
-            start: {
-                default: 18
-            },
-            end: {
-                default: 34
-            }
-        }
+        name: 'Monday'
+        start: number
+        end: number
+        isClosed: boolean
     },
     {
-        name: 'Tuesday',
-        hour: {
-            type: Number,
-            start: {
-                default: 18
-            },
-            end: {
-                default: 34
-            }
-        }
+        name: 'Tuesday'
+        start: number
+        end: number
+        isClosed: boolean
     },
     {
-        name: 'Wednesday',
-        hour: {
-            type: Number,
-            start: {
-                default: 18
-            },
-            end: {
-                default: 34
-            }
-        }
+        name: 'Wednesday'
+        start: number
+        end: number
+        isClosed: boolean
     },
     {
-        name: 'Thursday',
-        hour: {
-            type: Number,
-            start: {
-                default: 18
-            },
-            end: {
-                default: 34
-            }
-        }
+        name: 'Thursday'
+        start: number
+        end: number
+        isClosed: boolean
     },
     {
-        name: 'Friday',
-        hour: {
-            type: Number,
-            start: {
-                default: 18
-            },
-            end: {
-                default: 34
-            }
-        }
+        name: 'Friday'
+        start: number
+        end: number
+        isClosed: boolean
     },
     {
-        name: 'Saturday',
-        hour: {
-            type: Number,
-            start: {
-                default: 18
-            },
-            end: {
-                default: 34
-            }
-        }
+        name: 'Saturday'
+        start: number
+        end: number
+        isClosed: boolean
     },
 ]
 
-export interface BusinessI {
+export interface BusinessI extends BusinessMethodsI {
     name: string
     logo: string
     businessType: string
@@ -274,14 +229,17 @@ export const businessSchema = new Schema<BusinessI, BusinessModelT, BusinessMeth
                 type: String,
                 default: 'Sunday'
             },
-            hour: {
+            start: {
                 type: Number,
-                start: {
-                    default: 18
-                },
-                end: {
-                    default: 34
-                }
+                default: 18
+            },
+            end: {
+                type: Number,
+                default: 34
+            },
+            isClosed: {
+                type: Boolean,
+                default: false
             }
         },
         {
@@ -289,14 +247,17 @@ export const businessSchema = new Schema<BusinessI, BusinessModelT, BusinessMeth
                 type: String,
                 default: 'Monday'
             },
-            hour: {
+            start: {
                 type: Number,
-                start: {
-                    default: 18
-                },
-                end: {
-                    default: 34
-                }
+                default: 18
+            },
+            end: {
+                type: Number,
+                default: 34
+            },
+            isClosed: {
+                type: Boolean,
+                default: false
             }
         },
         {
@@ -304,14 +265,17 @@ export const businessSchema = new Schema<BusinessI, BusinessModelT, BusinessMeth
                 type: String,
                 default: 'Tuesday'
             },
-            hour: {
+            start: {
                 type: Number,
-                start: {
-                    default: 18
-                },
-                end: {
-                    default: 34
-                }
+                default: 18
+            },
+            end: {
+                type: Number,
+                default: 34
+            },
+            isClosed: {
+                type: Boolean,
+                default: false
             }
         },
         {
@@ -319,14 +283,17 @@ export const businessSchema = new Schema<BusinessI, BusinessModelT, BusinessMeth
                 type: String,
                 default: 'Wednesday'
             },
-            hour: {
+            start: {
                 type: Number,
-                start: {
-                    default: 18
-                },
-                end: {
-                    default: 34
-                }
+                default: 18
+            },
+            end: {
+                type: Number,
+                default: 34
+            },
+            isClosed: {
+                type: Boolean,
+                default: false
             }
         },
         {
@@ -334,14 +301,17 @@ export const businessSchema = new Schema<BusinessI, BusinessModelT, BusinessMeth
                 type: String,
                 default: 'Thursday'
             },
-            hour: {
+            start: {
                 type: Number,
-                start: {
-                    default: 18
-                },
-                end: {
-                    default: 34
-                }
+                default: 18
+            },
+            end: {
+                type: Number,
+                default: 34
+            },
+            isClosed: {
+                type: Boolean,
+                default: false
             }
         },
         {
@@ -349,14 +319,17 @@ export const businessSchema = new Schema<BusinessI, BusinessModelT, BusinessMeth
                 type: String,
                 default: 'Friday'
             },
-            hour: {
+            start: {
                 type: Number,
-                start: {
-                    default: 18
-                },
-                end: {
-                    default: 34
-                }
+                default: 18
+            },
+            end: {
+                type: Number,
+                default: 34
+            },
+            isClosed: {
+                type: Boolean,
+                default: false
             }
         },
         {
@@ -364,14 +337,17 @@ export const businessSchema = new Schema<BusinessI, BusinessModelT, BusinessMeth
                 type: String,
                 default: 'Saturday'
             },
-            hour: {
+            start: {
                 type: Number,
-                start: {
-                    default: 18
-                },
-                end: {
-                    default: 34
-                }
+                default: 18
+            },
+            end: {
+                type: Number,
+                default: 34
+            },
+            isClosed: {
+                type: Boolean,
+                default: false
             }
         }
     ],
