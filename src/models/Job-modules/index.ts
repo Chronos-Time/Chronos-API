@@ -1,6 +1,7 @@
 import { Schema, InferSchemaType, model, Types, Model, Document } from 'mongoose'
 import { TimeI } from '../../constants/time'
-import { BusinessHoursT } from '../Business/index.model'
+import Business, { BusinessHoursT } from '../Business/index.model'
+import { err } from '../../constants/general'
 
 export type JobModuleDocT = Document<unknown, any, JobModuleI> & JobModuleI
 
@@ -223,7 +224,15 @@ jobModuleSchema.pre('save', async function (next) {
     const jobModule = this
 
     if (!jobModule.customHours.length) {
-        jobModule.customHours = [
+        const { businessHours } = await Business.findById(
+            jobModule.business._id || jobModule.business
+            , { businessHours: 1 }
+        )
+            .catch(e => {
+                throw err(400, 'This job module is not attached a business')
+            })
+
+        jobModule.customHours = businessHours.length === 7 ? businessHours : [
             {
                 name: 'Sunday',
                 start: 18,

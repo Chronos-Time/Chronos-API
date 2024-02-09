@@ -2,6 +2,7 @@ import { Schema, InferSchemaType, model, Model, Mongoose, Types, Document } from
 import v from 'validator'
 import { UserT } from '../user/index.model'
 import { AddressI } from '../Address/index.model'
+import { TimeI } from '../../constants/time'
 
 export type BusinessDocT = Document<unknown, any, BusinessI> & BusinessI
 
@@ -50,6 +51,13 @@ export type BusinessHoursT = [
     },
 ]
 
+export type UnavailabilityT = {
+    name?: string
+    description?: string
+    start: TimeI
+    end: TimeI
+}
+
 export interface BusinessI extends BusinessMethodsI {
     name: string
     logo: string
@@ -75,6 +83,7 @@ export interface BusinessI extends BusinessMethodsI {
         linkedin?: string
     }
     businessHours: BusinessHoursT
+    unavailability: UnavailabilityT
     // EIN: string
     // jobModules: Types.ObjectId[] | JobModuleT[]
 }
@@ -351,6 +360,7 @@ export const businessSchema = new Schema<BusinessI, BusinessModelT, BusinessMeth
             }
         }
     ],
+    unavailability: []
 }, {
     timestamps: true
 })
@@ -373,8 +383,3 @@ businessSchema.pre('save', async function (next) {
 
 require('./methods')
 
-export type BusinessT = InferSchemaType<typeof businessSchema>
-
-const Business = model('Business', businessSchema)
-
-export default Business
