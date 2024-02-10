@@ -1,8 +1,9 @@
-import { Schema, InferSchemaType, model, Model, Mongoose, Types, Document } from 'mongoose'
+import { Schema, InferSchemaType, model, Model, Mongoose, Types, Document, PopulatedDoc } from 'mongoose'
 import v from 'validator'
 import { UserT } from '../user/index.model'
-import { AddressI } from '../Address/index.model'
-import { TimeI } from '../../constants/time'
+import { AddressDocT, AddressI } from '../Address/index.model'
+import { ISOT, TimeI } from '../../constants/time'
+import { TimeSchema } from '../time.model'
 
 export type BusinessDocT = Document<unknown, any, BusinessI> & BusinessI
 
@@ -67,7 +68,7 @@ export interface BusinessI extends BusinessMethodsI {
     picture?: string
     employees: Types.ObjectId[] | UserT[]
     admins: Types.ObjectId[] | UserT[]
-    address: Types.ObjectId | AddressI
+    address: PopulatedDoc<Document<Types.ObjectId> & AddressDocT>
     phone: string
     website: string
     images: string[]
@@ -83,13 +84,19 @@ export interface BusinessI extends BusinessMethodsI {
         linkedin?: string
     }
     businessHours: BusinessHoursT
-    unavailability: UnavailabilityT
+    unavailability: UnavailabilityT[]
     // EIN: string
     // jobModules: Types.ObjectId[] | JobModuleT[]
 }
 
 export interface BusinessMethodsI {
     updateBusinessHours: (hours: BusinessHoursT) => Promise<BusinessDocT>
+    addUnavailablity: (
+        start: ISOT,
+        end: ISOT,
+        name?: string,
+        description?: string,
+    ) => Promise<BusinessDocT>
 }
 
 interface BusinessVirtualsI {
@@ -360,7 +367,12 @@ export const businessSchema = new Schema<BusinessI, BusinessModelT, BusinessMeth
             }
         }
     ],
-    unavailability: []
+    unavailability: [{
+        start: TimeSchema,
+        end: TimeSchema,
+        description: String,
+        name: String
+    }]
 }, {
     timestamps: true
 })
@@ -375,7 +387,11 @@ businessSchema.pre('save', async function (next) {
     if (business.isModified('businessEmail')) {
         business.businessEmail = business.businessEmail.toLowerCase()
 
-        //Email validation...
+        //Email validation...   
+    }
+
+    if (business.isModified('unavailability')) {
+        //find duplicate name
     }
 
     next()
@@ -383,3 +399,8 @@ businessSchema.pre('save', async function (next) {
 
 require('./methods')
 
+export type BusinessT = InferSchemaType<typeof businessSchema>
+
+const Business = model('Business', businessSchema)
+
+export default Business

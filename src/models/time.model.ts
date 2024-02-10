@@ -3,10 +3,11 @@ import { coordinatesT } from '../constants/location'
 import v from 'validator'
 import { isISO, isUTC, isValidTimeZone } from '../constants/time'
 import { PointSchema } from './Address/point.model'
+import { DateTime } from 'luxon'
 
 export interface TimeI {
     utc: string
-    timezone: string
+    iana: string
     local: string
     geoLocation: coordinatesT
 }
@@ -17,7 +18,7 @@ interface TimeMethodsI {
 
 type TimeModelT = Model<TimeI, {}, TimeMethodsI>
 
-const TimeSchema = new Schema<TimeI, TimeModelT, TimeMethodsI>({
+export const TimeSchema = new Schema<TimeI, TimeModelT, TimeMethodsI>({
     utc: {
         type: String,
         validate: {
@@ -40,7 +41,7 @@ const TimeSchema = new Schema<TimeI, TimeModelT, TimeMethodsI>({
             }
         }
     },
-    timezone: {
+    iana: {
         type: String,
         validate: {
             validator: (value: string) => {
@@ -63,8 +64,30 @@ const TimeSchema = new Schema<TimeI, TimeModelT, TimeMethodsI>({
     ]
 })
 
+TimeSchema.pre('save', async function (next) {
+    const time = this
+    let errs = []
+
+    if (time.isModified('local')) {
+        time.iana = DateTime.fromISO(time.local).toFormat('z')
+    }
+
+    if (time.isModified('iana')) {
+        const localTz = DateTime.fromISO(time.local).toFormat('z')
+        if (time.iana !== localTz) {
+            errs.push('Timezone provided does not match local timezone stored')
+        }
+    }
+
+    if (errs.length > 0) {
+        next(new Error(errs.join(",")))
+    }
+
+    next()
+})
+
 export type TimezoneT = InferSchemaType<typeof TimeSchema>
 
-const Time = model('time', TimeSchema)
+const Time = model('Time', TimeSchema)
 
 export default Time

@@ -1,9 +1,12 @@
-import { Router, Request } from 'express'
+import { Router, Request, Response } from 'express'
 import { auth } from '../../middleware/auth'
 import Business from '../../models/Business/index.model'
 import { err, handleSaveError, validateKeys } from '../../constants/general'
-import BusinessAdmin from '../../models/BusinessAdmin/index.model';
-import { addAddress } from '../../constants/location';
+import BusinessAdmin from '../../models/BusinessAdmin/index.model'
+import { addAddress } from '../../constants/location'
+import { businessPopulate, businessSelect } from './constants'
+import c from 'ansi-colors'
+
 
 const SetupRouter = Router()
 SetupRouter.use(auth)
@@ -98,7 +101,7 @@ SetupRouter.post("/setup", async (req: Request<{}, {}, PostBusinessI>, res) => {
         newBusiness.admins.push(businessAdmin.id)
 
         const business = await newBusiness.save()
-            .catch(e => {
+            .catch((e: any) => {
                 throw handleSaveError(e)
             })
 
@@ -114,12 +117,47 @@ SetupRouter.post("/setup", async (req: Request<{}, {}, PostBusinessI>, res) => {
         res.send(business)
     } catch (e: any) {
         if (e.isCustomErr) {
-            console.log('error', e)
             res
                 .status(e.status)
                 .send(e.error || e)
         } else {
             res.status(500).send(e)
+        }
+    }
+})
+
+SetupRouter.get("/list", async (req: Request, res: Response) => {
+    try {
+        const user = req.userData
+
+        const admin = await BusinessAdmin.findOne({
+            user: user._id
+        })
+        if (admin === null) {
+            throw err(403, 'You are not a business admin')
+        }
+
+        const businesses = await Business.find({
+            admins: { $in: admin._id }
+        }, businessSelect)
+            .populate(businessPopulate)
+            .catch(e => {
+                console.log(c.redBright('error: '), e)
+                throw err(500, 'something went wrong', e)
+            })
+
+        if (businesses === null) {
+            throw err(500, 'something went wrong')
+        }
+
+        res.status(200).send(businesses)
+    } catch (e: any) {
+        if (e.isCustomErr) {
+            res
+                .status(e.status)
+                .send(e.error || e)
+        } else {
+            res.send(e)
         }
     }
 })

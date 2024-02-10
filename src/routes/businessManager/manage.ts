@@ -1,53 +1,11 @@
 import { Router, Request } from 'express'
 import Business, { BusinessHoursT } from '../../models/Business/index.model'
 import { err, handleSaveError, validateKeys } from '../../constants/general'
-import BusinessAdmin from '../../models/BusinessAdmin/index.model'
-import { businessPopulate, businessSelect } from './constants'
-import c from 'ansi-colors'
-import { getBusinessMid, businessAdminAuth } from '../../middleware/businessAdmin'
 import { AddressI } from '../../models/Address/index.model'
 import { addAddress } from '../../constants/location'
+import { ISOT, validStartEnd } from '../../constants/time'
 
 const manageRouter = Router()
-manageRouter.use(businessAdminAuth)
-manageRouter.use('/business/:businessId', getBusinessMid)
-
-
-manageRouter.get("/list", async (req: Request, res) => {
-    try {
-        const user = req.userData
-
-        const admin = await BusinessAdmin.findOne({
-            user: user._id
-        })
-        if (admin === null) {
-            throw err(403, 'You are not a business admin')
-        }
-
-        const businesses = await Business.find({
-            admins: { $in: admin._id }
-        }, businessSelect)
-            .populate(businessPopulate)
-            .catch(e => {
-                console.log(c.redBright('error: '), e)
-                throw err(500, 'something went wrong', e)
-            })
-
-        if (businesses === null) {
-            throw err(500, 'something went wrong')
-        }
-
-        res.status(200).send(businesses)
-    } catch (e: any) {
-        if (e.isCustomErr) {
-            res
-                .status(e.status)
-                .send(e.error || e)
-        } else {
-            res.send(e)
-        }
-    }
-})
 
 interface UpdateBusinessI {
     name?: string
@@ -64,7 +22,7 @@ interface UpdateBusinessI {
     }
 }
 
-manageRouter.get("/business/:businessId", async (req: Request<{}, {}, {}>, res) => {
+manageRouter.get('', async (req: Request<{}, {}, {}>, res) => {
     try {
         res.status(200).send(req.business)
     } catch (e: any) {
@@ -72,7 +30,7 @@ manageRouter.get("/business/:businessId", async (req: Request<{}, {}, {}>, res) 
     }
 })
 
-manageRouter.post("/business/:businessId/update_basic", async (req: Request<{ businessId: string }, {}, UpdateBusinessI>, res) => {
+manageRouter.post('/update_basic', async (req: Request<{ businessId: string }, {}, UpdateBusinessI>, res) => {
     try {
         const business = req.business
         const update = req.body
@@ -106,7 +64,7 @@ interface UpdateAddressI extends AddressI {
     formatted: undefined
 }
 
-manageRouter.post("/business/:businessId/update_address", async (req: Request<{ businessId: string }, {}, UpdateBusinessI>, res) => {
+manageRouter.post('/update_address', async (req: Request<{}, {}, UpdateBusinessI>, res) => {
     try {
         const business = req.business
         const update = req.body
@@ -148,7 +106,7 @@ manageRouter.post("/business/:businessId/update_address", async (req: Request<{ 
 })
 
 
-manageRouter.post("/business/:businessId/set_business_hours", async (req: Request<{ businessId: string }, {}, { hours: BusinessHoursT }>, res) => {
+manageRouter.post('/set_business_hours', async (req: Request<{}, {}, { hours: BusinessHoursT }>, res) => {
     try {
         const business = req.business
         const { hours } = req.body
@@ -156,6 +114,45 @@ manageRouter.post("/business/:businessId/set_business_hours", async (req: Reques
         const updatedBusiness = await business.updateBusinessHours(hours)
 
         res.status(200).send(updatedBusiness)
+    } catch (e: any) {
+        if (e.isCustomErr) {
+            res
+                .status(e.status)
+                .send(e.error || e)
+        } else {
+            res.send(e)
+        }
+    }
+})
+
+type PostUnavailabilityT = {
+    start: ISOT
+    end: ISOT
+    name: string
+    description: string
+}
+
+manageRouter.post('/add_unvailability', async (req: Request<{}, {}, PostUnavailabilityT>, res) => {
+    try {
+        const business = req.business
+        const {
+            start,
+            end,
+            name,
+            description
+        } = req.body
+
+        const upadtedBusiness = await business.addUnavailablity(
+            start,
+            end,
+            name,
+            description
+        )
+            .catch((e: any) => {
+                throw e
+            })
+
+        res.send(upadtedBusiness)
     } catch (e: any) {
         if (e.isCustomErr) {
             res

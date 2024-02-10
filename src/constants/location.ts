@@ -5,11 +5,11 @@ import { Client, GeocodeResponse, GeocodeResponseData, TravelMode, TravelRestric
 
 export type coordinatesT = [
     /**
-     * Longitude
+     * Latitude
      */
     number,
     /**
-     * Latitude
+     * Longitude
      */
     number
 ]
@@ -88,8 +88,6 @@ export const geoHandleAddress = async (address: AddressI) => {
         },
     })
         .then(res => res.data)
-
-    console.log('geo data', originAddress)
 
     return originAddress
 

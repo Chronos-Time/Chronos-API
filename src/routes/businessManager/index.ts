@@ -10,8 +10,15 @@ import { businessAdminAuth, getBusinessMid, getJobModule, getJobModules } from '
 const BusinessManagerRouter = Router()
 
 BusinessManagerRouter.use('', SetupRouter)
-BusinessManagerRouter.use('', manageRouter)
+
+BusinessManagerRouter.use('/business/:businessId',
+    businessAdminAuth,
+    getBusinessMid,
+    manageRouter
+)
+
 BusinessManagerRouter.use('', employeeRouter)
+
 BusinessManagerRouter.use('/business/:businessId/job_modules',
     getBusinessMid,
     getJobModules,
