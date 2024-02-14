@@ -2,8 +2,8 @@ import { Schema, InferSchemaType, model, Model, Mongoose, Types, Document, Popul
 import v from 'validator'
 import { UserT } from '../user/index.model'
 import { AddressDocT, AddressI } from '../Address/index.model'
-import { ISOT, TimeI } from '../../constants/time'
-import { TimeSchema } from '../time.model'
+import { ISOT, PostUnavailabilityT } from '../../constants/time';
+import { TimeI, TimeSchema } from '../time.model'
 
 export type BusinessDocT = Document<unknown, any, BusinessI> & BusinessI
 
@@ -92,10 +92,7 @@ export interface BusinessI extends BusinessMethodsI {
 export interface BusinessMethodsI {
     updateBusinessHours: (hours: BusinessHoursT) => Promise<BusinessDocT>
     addUnavailablity: (
-        start: ISOT,
-        end: ISOT,
-        name?: string,
-        description?: string,
+        postUnavailability: PostUnavailabilityT
     ) => Promise<BusinessDocT>
 }
 

@@ -1,23 +1,51 @@
+import { TimeI } from '../models/time.model'
 import { coordinatesT } from './location'
 import luxon, { DateTime, Interval } from 'luxon'
+import { UnavailabilityT } from '../models/Business/index.model';
+import { err } from './general';
 
 export const minute = 60
 export const hour = minute * 60
 export const day = 86400
 export const week = day * 7
 
-export interface TimeI {
-    utc: string
-    timezone: string
-    local: string
+export type ISOT = string
+
+/**
+ * This is for when time is ever being sent to the api
+ */
+export type PostTimeT = {
+    local: ISOT
+    utc: ISOT
+    geoLocation: coordinatesT
+    iana: string
+}
+
+export type PostStartEndT = {
+    start: {
+        local: ISOT
+        utc: ISOT
+    }
+    end: {
+        local: ISOT
+        utc: ISOT
+    }
+    iana: string
     geoLocation: coordinatesT
 }
 
-export type ISOT = string
+export type PostUnavailabilityT = PostStartEndT & {
+    name: string
+    description: string
+}
 
 export const isUTC = (input: string): boolean => {
-    const dt = DateTime.fromISO(input, { setZone: true })
-    return dt.offset === 0;
+    try {
+        const dt = DateTime.fromISO(input, { setZone: true })
+        return dt.offset === 0;
+    } catch {
+        return false
+    }
 }
 
 export const isISO = (input: string): boolean => {
@@ -137,4 +165,73 @@ export const isStartTimeAfterNowWithTolerance = (startTime: string): boolean => 
 
     //subtracting an hour to be sure that that the request had time to happen
     return startDateTimeUnix > currentDateTimeUnix - hour
+}
+
+export const isStartEndIntersect = (
+    times: {
+        start: TimeI
+        end: TimeI
+        [key: string]: any
+    }[]
+): boolean => {
+    const sortedTimes = times.slice().sort((a, b) => {
+        return timeToUnix(a.start) - timeToUnix(b.start)
+    });
+
+    const seenEndTimes = new Set<number>();
+
+    for (const { start, end } of sortedTimes) {
+        const startUnix = DateTime.fromISO(start.utc).toSeconds()
+        const endUnix = DateTime.fromISO(end.utc).toSeconds()
+
+        if (seenEndTimes.has(startUnix) || seenEndTimes.has(endUnix)) {
+            return true // Found an intersection
+        }
+
+        for (let time of seenEndTimes) {
+            if (time >= startUnix && time <= endUnix) {
+                return true // Found an intersection
+            }
+        }
+
+        seenEndTimes.add(endUnix)
+    }
+
+    return false // No intersection found
+}
+
+export const timeToUnix = (time: TimeI) => {
+    return DateTime.fromISO(time.utc).toUnixInteger()
+}
+
+export const handleStartEnd = (
+    startEnd: PostStartEndT
+) => {
+    const {
+        start,
+        end,
+        iana,
+        geoLocation
+    } = startEnd
+
+    let useStartEndUTC: [
+        ISOT,
+        ISOT
+    ] = [null, null]
+
+    if (!geoLocation.length && iana) {
+        throw err(400, 'Timezone was not provided')
+    }
+
+    [start, end].forEach((time, i) => {
+        if (isISO(time.local)) {
+            useStartEndUTC[i] = start.local
+        } else if (isUTC(time.utc)) {
+            useStartEndUTC[i] = start.utc
+        }
+    })
+
+    if (useStartEndUTC.find((time) => time === null)) {
+        throw err(400, `Invalid ISO 8601 date times provided`)
+    }
 }

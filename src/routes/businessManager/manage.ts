@@ -2,8 +2,8 @@ import { Router, Request } from 'express'
 import Business, { BusinessHoursT } from '../../models/Business/index.model'
 import { err, handleSaveError, validateKeys } from '../../constants/general'
 import { AddressI } from '../../models/Address/index.model'
-import { addAddress } from '../../constants/location'
-import { ISOT, validStartEnd } from '../../constants/time'
+import { addAddress, coordinatesT } from '../../constants/location'
+import { ISOT, PostStartEndT, PostTimeT, PostUnavailabilityT, validStartEnd } from '../../constants/time'
 
 const manageRouter = Router()
 
@@ -125,13 +125,6 @@ manageRouter.post('/set_business_hours', async (req: Request<{}, {}, { hours: Bu
     }
 })
 
-type PostUnavailabilityT = {
-    start: ISOT
-    end: ISOT
-    name: string
-    description: string
-}
-
 manageRouter.post('/add_unvailability', async (req: Request<{}, {}, PostUnavailabilityT>, res) => {
     try {
         const business = req.business
@@ -139,15 +132,19 @@ manageRouter.post('/add_unvailability', async (req: Request<{}, {}, PostUnavaila
             start,
             end,
             name,
-            description
+            description,
+            iana,
+            geoLocation
         } = req.body
 
-        const upadtedBusiness = await business.addUnavailablity(
+        const upadtedBusiness = await business.addUnavailablity({
             start,
             end,
             name,
-            description
-        )
+            description,
+            iana,
+            geoLocation
+        })
             .catch((e: any) => {
                 throw e
             })

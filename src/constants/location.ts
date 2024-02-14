@@ -11,7 +11,7 @@ export type coordinatesT = [
     /**
      * Longitude
      */
-    number
+    number,
 ]
 export const maps = new Client({})
 
