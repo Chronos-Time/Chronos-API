@@ -1,14 +1,19 @@
 import { TimeI } from '../models/time.model'
-import { coordinatesT } from './location'
+import { coordinatesT, validateGeo } from './location'
 import luxon, { DateTime, Interval } from 'luxon'
 import { UnavailabilityT } from '../models/Business/index.model';
 import { err } from './general';
+import { getTZGeo, googleTime } from './googleTime';
+import { TimeZoneResponseData } from '@googlemaps/google-maps-services-js';
 
 export const minute = 60
 export const hour = minute * 60
 export const day = 86400
 export const week = day * 7
 
+/**
+ * ISO 8601
+ */
 export type ISOT = string
 
 /**
@@ -16,26 +21,39 @@ export type ISOT = string
  */
 export type PostTimeT = {
     local: ISOT
-    utc: ISOT
     geoLocation: coordinatesT
     iana: string
 }
 
 export type PostStartEndT = {
-    start: {
-        local: ISOT
-        utc: ISOT
-    }
-    end: {
-        local: ISOT
-        utc: ISOT
-    }
+    /**
+     * Start time in the local iana or geoLocation provided
+     */
+    start: ISOT
+    /**
+     * End time in the local iana or geoLocation provided
+     */
+    end: ISOT
+    /**
+     * Timezone
+     */
     iana: string
+    /**
+     * geo location of the local time provided
+     * 
+     * ex. [number, number]
+     */
     geoLocation: coordinatesT
 }
 
 export type PostUnavailabilityT = PostStartEndT & {
+    /**
+     * Name of unavailability
+     */
     name: string
+    /**
+     * description of unavailability
+     */
     description: string
 }
 
@@ -65,8 +83,8 @@ export const isValidTimeZone = (tz: string): boolean => {
 }
 
 export const validStartEnd = (
-    start: string,
-    end: string
+    start: ISOT,
+    end: ISOT
 ): {
     isValid: boolean,
     seconds: number
@@ -156,6 +174,13 @@ export const durationStringShort = (seconds: number): string => {
     }
 }
 
+/**
+ * The function checks if the provided start time is after the current time with a tolerance of one
+ * hour.
+ * @param {string} startTime - A string representing the start time in ISO format (e.g.
+ * "2022-01-01T10:00:00Z").
+ * @returns a boolean value.
+ */
 export const isStartTimeAfterNowWithTolerance = (startTime: string): boolean => {
     // Parse the start time provided
     const startDateTimeUnix = DateTime.fromISO(startTime).toUnixInteger()
@@ -204,9 +229,25 @@ export const timeToUnix = (time: TimeI) => {
     return DateTime.fromISO(time.utc).toUnixInteger()
 }
 
-export const handleStartEnd = (
-    startEnd: PostStartEndT
+export const handleFromGoogleTime = (
+    time: luxon.DateTime<true> | luxon.DateTime<false>,
+    gt: TimeZoneResponseData
 ) => {
+    return time.plus({
+        seconds: gt.rawOffset + gt.dstOffset
+    })
+        .setZone(
+            'UTC',
+            { keepLocalTime: true }
+        )
+}
+
+export const handleStartEnd = async (
+    startEnd: PostStartEndT
+): Promise<[
+    TimeI,
+    TimeI
+]> => {
     const {
         start,
         end,
@@ -214,24 +255,114 @@ export const handleStartEnd = (
         geoLocation
     } = startEnd
 
-    let useStartEndUTC: [
-        ISOT,
-        ISOT
-    ] = [null, null]
-
-    if (!geoLocation.length && iana) {
-        throw err(400, 'Timezone was not provided')
+    if (!isStartTimeAfterNowWithTolerance(start)) {
+        throw err(400, 'Start and Endtime not valid')
     }
 
-    [start, end].forEach((time, i) => {
-        if (isISO(time.local)) {
-            useStartEndUTC[i] = start.local
-        } else if (isUTC(time.utc)) {
-            useStartEndUTC[i] = start.utc
-        }
+    if (!validStartEnd(start, end).isValid) {
+        throw err(400, 'Start and End time not valid')
+    }
+
+    let geo: coordinatesT
+
+    if (validateGeo(geoLocation)) {
+        geo = geoLocation
+    } else if (isValidTimeZone(iana)) {
+        geo = await getTZGeo(iana)
+            .catch(() => {
+                throw err(500, 'unable iana from google')
+            })
+    } else {
+        throw err(400, 'Valid timezone was not provided')
+    }
+
+    const startDT = DateTime.fromISO(start)
+    const endDT = DateTime.fromISO(end)
+
+    const startGT = await googleTime(
+        geo,
+        startDT.toUnixInteger()
+    ).catch(e => {
+        throw err(500, 'unable timezone data from google')
     })
 
-    if (useStartEndUTC.find((time) => time === null)) {
-        throw err(400, `Invalid ISO 8601 date times provided`)
+    const endGT = await googleTime(
+        geo,
+        endDT.toUnixInteger()
+    ).catch(e => {
+        throw err(500, 'unable timezone data from google')
+    })
+
+    const startTime: TimeI = {
+        local: start,
+        utc: handleFromGoogleTime(startDT, startGT).toISO(),
+        iana: startGT.timeZoneId,
+        geoLocation: geo,
+        lastUpdated: DateTime.now().toUTC().toUnixInteger()
     }
+
+    const endTime: TimeI = {
+        local: start,
+        utc: handleFromGoogleTime(endDT, endGT).toISO(),
+        iana: endGT.timeZoneId,
+        geoLocation: geo,
+        lastUpdated: DateTime.now().toUTC().toUnixInteger()
+    }
+
+    return [
+        startTime,
+        endTime
+    ]
+}
+
+export const handleTime = async (
+    postTime: PostTimeT
+) => {
+    const {
+        local,
+        iana,
+        geoLocation
+    } = postTime
+
+    if (!validateGeo(geoLocation) && !isValidTimeZone(iana)) {
+        throw err(400, 'Valid timezone was not provided')
+    }
+
+    if (!isValidTimeZone(iana)) {
+        throw err(400, 'invalid timezone')
+    }
+
+    if (!isISO(local)) {
+        throw err(400, 'local time provided was not ISO 8601')
+    }
+
+    let geo: coordinatesT
+
+    if (geoLocation.length === 2) {
+        geo = geoLocation
+    } else {
+        geo = await getTZGeo(iana)
+            .catch(e => {
+                throw err(500, 'unable iana from google')
+            })
+    }
+
+    const localDT = DateTime.fromISO(local)
+
+    const localGT = await googleTime(
+        geo,
+        localDT.toUnixInteger()
+    ).catch(e => {
+        throw err(500, 'unable timezone data from google')
+    })
+
+    const localTime: TimeI = {
+        local,
+        utc: handleFromGoogleTime(localDT, localGT).toISO(),
+        iana: localGT.timeZoneId,
+        geoLocation: geo,
+        lastUpdated: DateTime.now().toUTC().toUnixInteger()
+    }
+
+    return localTime
 }

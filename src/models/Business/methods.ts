@@ -1,6 +1,6 @@
 import { BusinessDocT, BusinessHoursT, BusinessI, businessSchema, UnavailabilityT } from './index.model';
 import { err } from '../../constants/general'
-import { ISOT, isStartTimeAfterNowWithTolerance, isUTC, PostUnavailabilityT, validStartEnd } from '../../constants/time'
+import { handleStartEnd, ISOT, isStartTimeAfterNowWithTolerance, isUTC, PostTimeT, PostUnavailabilityT, validStartEnd } from '../../constants/time'
 import Time, { TimeI } from '../time.model'
 import { DateTime } from 'luxon'
 import Address, { AddressDocT, AddressI } from '../Address/index.model';
@@ -38,64 +38,39 @@ businessSchema.methods.addUnavailablity = async function (
     try {
         const business = this
         const {
-            start,
-            end,
             name,
             description,
-            iana
+            iana,
+            geoLocation
         } = postUnavailability
 
-        let businessAddress = null
-        businessAddress = await Address.findById(business.address._id)
-        const coordinates = businessAddress.location.coordinates || undefined
+        if (!iana && !geoLocation) {
+            let businessAddress = null
+            businessAddress = await Address.findById(business.address._id)
+            const coordinates = businessAddress.location.coordinates || undefined
 
-        const startDT = DateTime.fromISO(start.local)
-        const endDT = DateTime.fromISO(end.local)
-
-        if (iana) {
-            const tzgeo = await getTZGeo(iana)
-            console.log(tzgeo)
+            postUnavailability.geoLocation = coordinates
         }
 
-        //make sure there's no duplicate names
-        // if (name) {
-        //     if (business.unavailability.filter(uav => uav.name === name).length) {
-        //         throw err(400, `${name} already is exist as an unavailability`)
-        //     }
-        // }
+        const [startTime, endTime] = await handleStartEnd(postUnavailability)
+            .catch((e: any) => {
+                if (e.isCustomErr) {
+                    throw e
+                } else {
+                    throw err(500, 'unable to handle start and end dates')
+                }
+            })
 
-        // if (!isStartTimeAfterNowWithTolerance(start.local)) {
-        //     throw err(400, `Start time must be after now: ${start.local}`)
-        // }
+        const unavailability: BusinessI['unavailability'][number] = {
+            start: startTime,
+            end: endTime,
+            name,
+            description
+        }
 
-        // if (!validStartEnd(start, end).isValid) {
-        //     throw err(400, `Invalid start or end time: ${start} - ${end}`)
-        // }
+        business.unavailability.push(unavailability)
 
-        // const startTime: TimeI = {
-        //     local: start,
-        //     iana: startDT.toFormat('z'),
-        //     utc: startDT.toUTC().toISO(),
-        //     geoLocation: coordinates
-        // }
-
-        // const endTime: TimeI = {
-        //     local: end,
-        //     iana: endDT.toFormat('z'),
-        //     utc: endDT.toUTC().toString(),
-        //     geoLocation: coordinates
-        // }
-
-        // const unavailability: BusinessI['unavailability'][number] = {
-        //     start: startTime,
-        //     end: endTime,
-        //     name,
-        //     description
-        // }
-
-        // business.unavailability.push(unavailability)
-
-        // await business.save()
+        await business.save()
 
         return business
     } catch (e: any) {
