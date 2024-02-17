@@ -3,7 +3,21 @@ import { Document, Types } from 'mongoose'
 import _ from 'lodash'
 import { Client, GeocodeResponse, GeocodeResponseData, TravelMode, TravelRestriction, UnitSystem } from "@googlemaps/google-maps-services-js"
 
-export type coordinatesT = [number, number]
+/**
+ * Geo coordinates
+ * 
+ * [latitude, longitude]
+ */
+export type coordinatesT = [
+    /**
+     * Latitude
+     */
+    number,
+    /**
+     * Longitude
+     */
+    number,
+]
 export const maps = new Client({})
 
 type addyI = Document<unknown, any, AddressI> & AddressI & {
@@ -183,5 +197,13 @@ export const getDistanceById = async (originId: IDS, destinationId: IDS): Promis
 
 //checking if [ latitude, longitude ] is valid
 export const validateGeo = (geo: coordinatesT) => {
-    return _.inRange(geo[0], -180, 180) && _.inRange(geo[1], -90, 90)
+    try {
+        // return _.inRange(geo[0], -180, 180) && _.inRange(geo[1], -90, 90)
+        const validLat = -180 < geo[0] && geo[0] < 180
+        const validLgn = -90 < geo[1] && geo[1] < 90
+
+        return validLat && validLgn
+    } catch {
+        return false
+    }
 }

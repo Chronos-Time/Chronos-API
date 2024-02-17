@@ -66,8 +66,8 @@ AddressSchema.pre('save', async function (next) { //must use ES5 function to use
             address.location = {
                 type: 'Point',
                 coordinates: [
-                    lng,
-                    lat
+                    lat,
+                    lng
                 ]
             }
         }

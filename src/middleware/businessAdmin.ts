@@ -5,13 +5,20 @@ import BusinessAdmin, { BusinessAdminDocT } from '../models/BusinessAdmin/index.
 import Business from '../models/Business/index.model'
 import { businessPopulate, businessSelect } from '../routes/businessManager/constants'
 import { BusinessDocT } from '../models/Business/index.model';
-
+import JobModule, { JobModuleDocT } from '../models/Job-modules/index.model'
 
 declare module "express-serve-static-core" {
     interface Request {
         businessAdmin: BusinessAdminDocT
         business: BusinessDocT
+        jobModules: JobModuleDocT[]
+        jobModule: JobModuleDocT
     }
+}
+
+type businessURLT = {
+    businessId: string
+    jobModuleId: string
 }
 
 export async function businessAdminAuth(req: Request, res: Response, next: NextFunction) {
@@ -48,7 +55,7 @@ export async function businessAdminAuth(req: Request, res: Response, next: NextF
     }
 }
 
-export const getBusinessMid = async (req: Request<{ businessId: string }, {}, {}>, res: Response, next: NextFunction) => {
+export const getBusinessMid = async (req: Request<businessURLT, {}, {}>, res: Response, next: NextFunction) => {
     try {
         const businessId = req.params.businessId
         if (!businessId) throw err(400, 'No businessId found')
@@ -61,6 +68,46 @@ export const getBusinessMid = async (req: Request<{ businessId: string }, {}, {}
         if (!business) throw err(404, 'Business not found')
 
         req.business = business
+
+        business.updateBusinessHours
+
+        next()
+    } catch (err: any) {
+        res.status(err.status).send(err)
+    }
+}
+
+export const getJobModules = async (req: Request<businessURLT, { test: string }, {}>, res: Response, next: NextFunction) => {
+    try {
+        const param = req.query
+
+        const jobModules = await JobModule.find({
+            business: req.business._id
+        })
+
+        req.jobModules = jobModules
+
+        next()
+    } catch (err: any) {
+        res.status(err.status).send(err)
+    }
+}
+
+export const getJobModule = async (req: Request<businessURLT, {}, {}>, res: Response, next: NextFunction) => {
+    try {
+        const jobModule = await JobModule.findOne({
+            _id: req.params.jobModuleId
+        })
+
+        if (jobModule === null) {
+            throw err(400, 'Unable to find job module')
+        }
+
+        if (jobModule.business.toString() !== req.business.id) {
+            throw err(403, 'Unable to access job module')
+        }
+
+        req.jobModule = jobModule
 
         next()
     } catch (err: any) {

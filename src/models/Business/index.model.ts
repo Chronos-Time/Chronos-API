@@ -1,14 +1,68 @@
-import { Schema, InferSchemaType, model, Model, Mongoose, Types, Document } from 'mongoose'
+import { Schema, InferSchemaType, model, Model, Mongoose, Types, Document, PopulatedDoc } from 'mongoose'
 import v from 'validator'
-import jwt from 'jsonwebtoken'
-import bcrypt from 'bcrypt'
-import { capitalizeAllFirstLetters } from '../../constants/general'
 import { UserT } from '../user/index.model'
-import { AddressI } from '../Address/index.model'
+import { AddressDocT, AddressI } from '../Address/index.model'
+import { ISOT, PostUnavailabilityT } from '../../constants/time';
+import { TimeDocT, TimeI, TimeSchema } from '../Time.model'
+import { UnavailabilityDocT, UnavailabilitySchema } from '../Unavailability.model';
+import { JobModuleDocT, PostjobModuleT } from '../Job-modules/index.model';
+import { ErrT } from '../../constants/general';
 
 export type BusinessDocT = Document<unknown, any, BusinessI> & BusinessI
 
-export interface BusinessI {
+export type BusinessHoursT = [
+    {
+        name: 'Sunday'
+        start: number
+        end: number
+        isClosed: boolean
+    },
+    {
+        name: 'Monday'
+        start: number
+        end: number
+        isClosed: boolean
+    },
+    {
+        name: 'Tuesday'
+        start: number
+        end: number
+        isClosed: boolean
+    },
+    {
+        name: 'Wednesday'
+        start: number
+        end: number
+        isClosed: boolean
+    },
+    {
+        name: 'Thursday'
+        start: number
+        end: number
+        isClosed: boolean
+    },
+    {
+        name: 'Friday'
+        start: number
+        end: number
+        isClosed: boolean
+    },
+    {
+        name: 'Saturday'
+        start: number
+        end: number
+        isClosed: boolean
+    },
+]
+
+export type UnavailabilityT = {
+    name?: string
+    description?: string
+    start: TimeDocT
+    end: TimeDocT
+}
+
+export interface BusinessI extends BusinessMethodsI {
     name: string
     logo: string
     businessType: string
@@ -17,7 +71,7 @@ export interface BusinessI {
     picture?: string
     employees: Types.ObjectId[] | UserT[]
     admins: Types.ObjectId[] | UserT[]
-    address: Types.ObjectId | AddressI
+    address: PopulatedDoc<Document<Types.ObjectId> & AddressDocT>
     phone: string
     website: string
     images: string[]
@@ -32,19 +86,26 @@ export interface BusinessI {
         youtube?: string
         linkedin?: string
     }
+    businessHours: BusinessHoursT
+    unavailability: UnavailabilityDocT[]
     // EIN: string
-    // address: Types.ObjectId | AddressI
     // jobModules: Types.ObjectId[] | JobModuleT[]
 }
 
-interface BusinessMethodsI {
-    generateToken: () => {
-        access_token: string
-        refresh_token: string
-    }
-    prettyPrint(): {
-        [key: string]: any
-    }
+export interface BusinessMethodsI {
+    updateBusinessHours: (hours: BusinessHoursT) => Promise<BusinessDocT>
+
+    addUnavailablity: (
+        postUnavailability: PostUnavailabilityT
+    ) => Promise<BusinessDocT>
+
+    remUnavailability: (
+        name: string
+    ) => Promise<BusinessDocT>
+
+    addJobModule: (
+        postJobModule: PostjobModuleT
+    ) => Promise<JobModuleDocT>
 }
 
 interface BusinessVirtualsI {
@@ -54,7 +115,7 @@ interface BusinessVirtualsI {
 type BusinessModelT = Model<BusinessI, {}, BusinessMethodsI & BusinessVirtualsI>
 
 
-const businessSchema = new Schema<BusinessI, BusinessModelT, BusinessMethodsI & BusinessVirtualsI>({
+export const businessSchema = new Schema<BusinessI, BusinessModelT, BusinessMethodsI & BusinessVirtualsI>({
     name: {
         type: String,
         required: true
@@ -186,7 +247,136 @@ const businessSchema = new Schema<BusinessI, BusinessModelT, BusinessMethodsI & 
                 }
             }
         }
-    }
+    },
+    businessHours: [
+        {
+            name: {
+                type: String,
+                default: 'Sunday'
+            },
+            start: {
+                type: Number,
+                default: 18
+            },
+            end: {
+                type: Number,
+                default: 34
+            },
+            isClosed: {
+                type: Boolean,
+                default: false
+            }
+        },
+        {
+            name: {
+                type: String,
+                default: 'Monday'
+            },
+            start: {
+                type: Number,
+                default: 18
+            },
+            end: {
+                type: Number,
+                default: 34
+            },
+            isClosed: {
+                type: Boolean,
+                default: false
+            }
+        },
+        {
+            name: {
+                type: String,
+                default: 'Tuesday'
+            },
+            start: {
+                type: Number,
+                default: 18
+            },
+            end: {
+                type: Number,
+                default: 34
+            },
+            isClosed: {
+                type: Boolean,
+                default: false
+            }
+        },
+        {
+            name: {
+                type: String,
+                default: 'Wednesday'
+            },
+            start: {
+                type: Number,
+                default: 18
+            },
+            end: {
+                type: Number,
+                default: 34
+            },
+            isClosed: {
+                type: Boolean,
+                default: false
+            }
+        },
+        {
+            name: {
+                type: String,
+                default: 'Thursday'
+            },
+            start: {
+                type: Number,
+                default: 18
+            },
+            end: {
+                type: Number,
+                default: 34
+            },
+            isClosed: {
+                type: Boolean,
+                default: false
+            }
+        },
+        {
+            name: {
+                type: String,
+                default: 'Friday'
+            },
+            start: {
+                type: Number,
+                default: 18
+            },
+            end: {
+                type: Number,
+                default: 34
+            },
+            isClosed: {
+                type: Boolean,
+                default: false
+            }
+        },
+        {
+            name: {
+                type: String,
+                default: 'Saturday'
+            },
+            start: {
+                type: Number,
+                default: 18
+            },
+            end: {
+                type: Number,
+                default: 34
+            },
+            isClosed: {
+                type: Boolean,
+                default: false
+            }
+        }
+    ],
+    unavailability: [UnavailabilitySchema]
 }, {
     timestamps: true
 })
@@ -201,11 +391,17 @@ businessSchema.pre('save', async function (next) {
     if (business.isModified('businessEmail')) {
         business.businessEmail = business.businessEmail.toLowerCase()
 
-        //Email validation...
+        //Email validation...   
+    }
+
+    if (business.isModified('unavailability')) {
+        //find duplicate name
     }
 
     next()
 })
+
+require('./methods')
 
 export type BusinessT = InferSchemaType<typeof businessSchema>
 

@@ -32,6 +32,13 @@ export const err = (
     }
 }
 
+export type ErrT = {
+    status: number
+    message: string
+    error: any
+    isCustomeErr: boolean
+}
+
 /**
  * The function `handleSaveError` is a helper function that handles errors that occur when saving
  * data to the database. It returns an object with a status code, message, and optional error,

@@ -1,13 +1,13 @@
 import { Schema, InferSchemaType, model, Types, Model } from 'mongoose'
 import { UserT } from '../user/index.model'
-import { BusinessT } from '../Business/index.model'
+import { BusinessI } from '../Business/index.model'
 import v from 'validator'
 import { capitalizeAllFirstLetters } from '../../constants/general'
 
 interface EmployeeI {
     user: Types.ObjectId | UserT
-    attachedBusinesses: Types.ObjectId[] | BusinessT[]
-    activelyEmployedTo: Types.ObjectId[] | BusinessT[]
+    attachedBusinesses: Types.ObjectId[] | BusinessI[]
+    activelyEmployedTo: Types.ObjectId[] | BusinessI[]
     metaData: {
         [key: string]: any
     }
