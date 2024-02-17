@@ -1,12 +1,9 @@
-import { BusinessDocT, BusinessHoursT, BusinessI, businessSchema, UnavailabilityT } from './index.model';
-import { err } from '../../constants/general'
-import { handleStartEnd, ISOT, isStartTimeAfterNowWithTolerance, isUTC, PostTimeT, PostUnavailabilityT, validStartEnd } from '../../constants/time'
-import Time, { TimeI } from '../time.model'
-import { DateTime } from 'luxon'
-import Address, { AddressDocT, AddressI } from '../Address/index.model';
-import { coordinatesT } from '../../constants/location';
-import { getTZGeo, googleTime } from '../../constants/googleTime'
-import { TimeZoneResponseData } from '@googlemaps/google-maps-services-js'
+import { BusinessDocT, BusinessHoursT, businessSchema } from './index.model'
+import { ErrT, err, handleSaveError } from '../../constants/general'
+import { handleStartEnd, minute, PostUnavailabilityT } from '../../constants/time'
+import Address from '../Address/index.model'
+import Unavailability from '../Unavailability.model';
+import JobModule, { PostjobModuleT } from '../Job-modules/index.model';
 
 
 businessSchema.methods.updateBusinessHours = async function (
@@ -61,19 +58,135 @@ businessSchema.methods.addUnavailablity = async function (
                 }
             })
 
-        const unavailability: BusinessI['unavailability'][number] = {
+        const unavailability = new Unavailability({
             start: startTime,
             end: endTime,
-            name,
+            name: name || `${startTime.local}-${endTime.local}`,
             description
-        }
+        })
 
         business.unavailability.push(unavailability)
 
         await business.save()
+            .catch(e => handleSaveError(e))
+
+        const jobModules = await JobModule.find({
+            business: business._id
+        })
+
+        for (let jb of jobModules) {
+            const foundUnav = jb.unavaiability
+                .filter(unav => unav.name === unavailability.name)
+                .length
+
+            if (foundUnav === 0) {
+                jb.unavaiability.push(unavailability)
+                jb.save()
+            }
+        }
 
         return business
     } catch (e: any) {
         throw e
+    }
+}
+
+businessSchema.methods.remUnavailability = async function (
+    name: string
+): Promise<BusinessDocT> {
+    try {
+        const business = this
+
+        const originalLength = business.unavailability.length
+
+        business.unavailability = business.unavailability.filter(uv => {
+            return uv.name !== name
+        })
+
+        if (originalLength === business.unavailability.length) {
+            return business
+        }
+
+        await business.save()
+            .catch(e => handleSaveError(e))
+
+        const jobModules = await JobModule.find({
+            business: business._id
+        })
+
+        for (let jb of jobModules) {
+            const jbunavaiabilities = jb.unavaiability.length
+            jb.unavaiability = jb.unavaiability
+                .filter(unav => unav.name !== name)
+
+            if (jbunavaiabilities !== jb.unavaiability.length) {
+                jb.save()
+            }
+
+        }
+
+        return business
+    } catch (e: any) {
+        return e
+    }
+}
+
+businessSchema.methods.addJobModule = async function (
+    postJobModule: PostjobModuleT
+) {
+    try {
+        const business = this
+        const {
+            name,
+            serviceType,
+            tags,
+            description,
+            duration,
+            prepTime,
+            customHours,
+        } = postJobModule
+
+        if (!name) {
+            throw err(400, 'Job module must have a name must be provided')
+        }
+
+        if (typeof duration != 'number') {
+            throw err(400, 'Duration must be provided as a Unix Integer')
+        }
+
+        const jobModules = await JobModule.find({
+            business: business._id
+        }, { name: 1 })
+
+        if (jobModules.length > 0) {
+            if (jobModules.filter(j => j.name === name).length) {
+                throw err(400, 'Job already exists')
+            }
+        }
+
+        if (duration < minute) {
+            throw err(400, 'duration cannot be less than one minute')
+        }
+
+        const newJobModule = new JobModule({
+            name,
+            serviceType,
+            business: business._id,
+            tags,
+            description,
+            duration,
+            prepTime,
+            customHours: customHours || business.businessHours,
+            unavaiability: business.unavailability
+        })
+
+        const jobModule = await newJobModule.save()
+            .catch(e => {
+                throw handleSaveError(e)
+            })
+
+        return jobModule
+    } catch (e: any) {
+        return e
     }
 }

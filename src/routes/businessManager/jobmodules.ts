@@ -1,13 +1,13 @@
 import { Router, Request } from 'express'
 import { businessAdminAuth, getBusinessMid, getJobModules } from '../../middleware/businessAdmin'
 import { err, handleSaveError } from '../../constants/general'
-import JobModule from '../../models/Job-modules'
+import JobModule from '../../models/Job-modules/index.model';
 import { minute } from '../../constants/time'
 import { BusinessHoursT } from '../../models/Business/index.model'
 
 const JobModulesRouter = Router()
 
-interface PostjobModuleI {
+type PostjobModuleT = {
     name: string
     description: string
     serviceType: string
@@ -17,43 +17,9 @@ interface PostjobModuleI {
     customHours?: BusinessHoursT
 }
 
-JobModulesRouter.post('/create', async (req: Request<{}, {}, PostjobModuleI>, res) => {
+JobModulesRouter.post('/create', async (req: Request<{}, {}, PostjobModuleT>, res) => {
     try {
-        const {
-            name,
-            serviceType,
-            tags,
-            duration,
-            description,
-            prepTime,
-            customHours
-        } = req.body
-
-        if (req.jobModules.length > 0) {
-            if (req.jobModules.filter(j => j.name === name).length) {
-                throw err(400, 'Job already exists')
-            }
-        }
-
-        if (duration < minute * 1) {
-            throw err(400, 'duration cannot be less than one minute')
-        }
-
-        const newJobModule = new JobModule({
-            name,
-            serviceType,
-            business: req.business._id,
-            tags,
-            description,
-            duration,
-            prepTime,
-            customHours: customHours || req.business.businessHours
-        })
-
-        const jobModule = await newJobModule.save()
-            .catch(e => {
-                throw handleSaveError(e)
-            })
+        const jobModule = await req.business.addJobModule(req.body)
 
         res.status(200).send(jobModule)
     } catch (e: any) {

@@ -1,15 +1,31 @@
 import { Schema, InferSchemaType, model, Types, Model, Document } from 'mongoose'
 import Business, { BusinessHoursT } from '../Business/index.model'
 import { err } from '../../constants/general'
-import { TimeI } from '../time.model'
+import { TimeI } from '../Time.model'
+import { UnavailabilityDocT, UnavailabilitySchema } from '../Unavailability.model'
+import Unavailability from '../Unavailability.model';
+import { PostUnavailabilityT } from '../../constants/time'
 
 export type JobModuleDocT = Document<unknown, any, JobModuleI> & JobModuleI
+
+export type PostjobModuleT = {
+    name: string
+    description: string
+    serviceType: string
+    tags: string[]
+    duration: number
+    prepTime: number
+    customHours?: JobModuleI['customHours']
+    unavailability?: PostUnavailabilityT[]
+}
+
+
 
 interface JobModuleI {
     name: string
     business: Types.ObjectId
     /**
-     * main job type ex 'Personal Fitness Trainer', 'Hair Stylist'
+     * main job type ex 'Personal Fitness Trainer', 'Hair Stylist', 'Barber'
      * 
      */
     serviceType: string
@@ -27,16 +43,7 @@ interface JobModuleI {
     /**
      * This will be taken from the business schema
      */
-    unavaiability: {
-        /**
-         * In UTC
-         */
-        start: TimeI
-        /**
-         * In UTC
-         */
-        end: TimeI
-    }[]
+    unavaiability: UnavailabilityDocT[]
     /**
      * defaults to the Businesses working hours
      * but can be updated by data
@@ -60,6 +67,9 @@ interface JobModuleMethodsI {
 type JobModuleModelT = Model<JobModuleI, {}, JobModuleMethodsI>
 
 const jobModuleSchema = new Schema<JobModuleI, JobModuleModelT, JobModuleMethodsI>({
+    /**
+     * The name of the job module that people will see
+     */
     name: {
         type: String,
         required: true,
@@ -208,16 +218,7 @@ const jobModuleSchema = new Schema<JobModuleI, JobModuleModelT, JobModuleMethods
             }
         }
     ],
-    unavaiability: [{
-        start: {
-            type: String,
-            required: true
-        },
-        end: {
-            type: String,
-            required: true
-        }
-    }]
+    unavaiability: [UnavailabilitySchema]
 })
 
 jobModuleSchema.pre('save', async function (next) {

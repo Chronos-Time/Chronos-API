@@ -5,7 +5,7 @@ import BusinessAdmin, { BusinessAdminDocT } from '../models/BusinessAdmin/index.
 import Business from '../models/Business/index.model'
 import { businessPopulate, businessSelect } from '../routes/businessManager/constants'
 import { BusinessDocT } from '../models/Business/index.model';
-import JobModule, { JobModuleDocT } from '../models/Job-modules'
+import JobModule, { JobModuleDocT } from '../models/Job-modules/index.model'
 
 declare module "express-serve-static-core" {
     interface Request {

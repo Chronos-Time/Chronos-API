@@ -3,7 +3,10 @@ import v from 'validator'
 import { UserT } from '../user/index.model'
 import { AddressDocT, AddressI } from '../Address/index.model'
 import { ISOT, PostUnavailabilityT } from '../../constants/time';
-import { TimeI, TimeSchema } from '../time.model'
+import { TimeDocT, TimeI, TimeSchema } from '../Time.model'
+import { UnavailabilityDocT, UnavailabilitySchema } from '../Unavailability.model';
+import { JobModuleDocT, PostjobModuleT } from '../Job-modules/index.model';
+import { ErrT } from '../../constants/general';
 
 export type BusinessDocT = Document<unknown, any, BusinessI> & BusinessI
 
@@ -55,8 +58,8 @@ export type BusinessHoursT = [
 export type UnavailabilityT = {
     name?: string
     description?: string
-    start: TimeI
-    end: TimeI
+    start: TimeDocT
+    end: TimeDocT
 }
 
 export interface BusinessI extends BusinessMethodsI {
@@ -84,16 +87,25 @@ export interface BusinessI extends BusinessMethodsI {
         linkedin?: string
     }
     businessHours: BusinessHoursT
-    unavailability: UnavailabilityT[]
+    unavailability: UnavailabilityDocT[]
     // EIN: string
     // jobModules: Types.ObjectId[] | JobModuleT[]
 }
 
 export interface BusinessMethodsI {
     updateBusinessHours: (hours: BusinessHoursT) => Promise<BusinessDocT>
+
     addUnavailablity: (
         postUnavailability: PostUnavailabilityT
     ) => Promise<BusinessDocT>
+
+    remUnavailability: (
+        name: string
+    ) => Promise<BusinessDocT>
+
+    addJobModule: (
+        postJobModule: PostjobModuleT
+    ) => Promise<JobModuleDocT>
 }
 
 interface BusinessVirtualsI {
@@ -364,12 +376,7 @@ export const businessSchema = new Schema<BusinessI, BusinessModelT, BusinessMeth
             }
         }
     ],
-    unavailability: [{
-        start: TimeSchema,
-        end: TimeSchema,
-        description: String,
-        name: String
-    }]
+    unavailability: [UnavailabilitySchema]
 }, {
     timestamps: true
 })

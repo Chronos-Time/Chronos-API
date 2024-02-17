@@ -1,14 +1,9 @@
-import { InferSchemaType, Model, Schema, model } from 'mongoose'
-import { coordinatesT, validateGeo } from '../constants/location'
-import v from 'validator'
-import { day, handleTime, isISO, isUTC, isValidTimeZone } from '../constants/time'
-import { PointSchema } from './Address/point.model'
-import { DateTime } from 'luxon'
-import { getTZGeo, googleTime } from '../constants/googleTime'
-import { TimeZoneResponseData } from '@googlemaps/google-maps-services-js'
-import geoTZ from 'geo-tz'
-import { err } from '../constants/general'
-import { IANAZone } from 'luxon'
+import { InferSchemaType, Model, Schema, model, Document } from 'mongoose'
+import { coordinatesT } from '../constants/location'
+import { handleTime, isValidTimeZone } from '../constants/time'
+import { BusinessI } from './Business/index.model'
+
+export type TimeDocT = Document<unknown, any, TimeI> & TimeI
 
 export interface TimeI {
     utc: string

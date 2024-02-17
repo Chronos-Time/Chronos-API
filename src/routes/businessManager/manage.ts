@@ -1,9 +1,9 @@
 import { Router, Request } from 'express'
-import Business, { BusinessHoursT } from '../../models/Business/index.model'
+import { BusinessHoursT } from '../../models/Business/index.model'
 import { err, handleSaveError, validateKeys } from '../../constants/general'
 import { AddressI } from '../../models/Address/index.model'
-import { addAddress, coordinatesT } from '../../constants/location'
-import { ISOT, PostStartEndT, PostTimeT, PostUnavailabilityT, validStartEnd } from '../../constants/time'
+import { addAddress } from '../../constants/location'
+import { PostUnavailabilityT } from '../../constants/time'
 
 const manageRouter = Router()
 
@@ -157,6 +157,25 @@ manageRouter.post('/add_unvailability', async (req: Request<{}, {}, PostUnavaila
                 .send(e.error || e)
         } else {
             res.send(e)
+        }
+    }
+})
+
+manageRouter.delete('/rem_unvailability/:unavailabilityName', async (req: Request<{ unavailabilityName: string }, {}, {}>, res) => {
+    try {
+        const business = req.business
+        const { unavailabilityName } = req.params
+
+        const updatedBusiness = await business.remUnavailability(unavailabilityName)
+
+        res.status(200).send(updatedBusiness)
+    } catch (e: any) {
+        if (e.isCustomErr) {
+            res
+                .status(e.status)
+                .send(e.error || e)
+        } else {
+            res.status(500).send(e)
         }
     }
 })

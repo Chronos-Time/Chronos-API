@@ -1,4 +1,4 @@
-import { TimeI } from '../models/time.model'
+import Time, { TimeDocT, TimeI } from '../models/Time.model'
 import { coordinatesT, validateGeo } from './location'
 import luxon, { DateTime, Interval } from 'luxon'
 import { UnavailabilityT } from '../models/Business/index.model';
@@ -67,9 +67,9 @@ export const isUTC = (input: string): boolean => {
 }
 
 export const isISO = (input: string): boolean => {
-    const isoDateRegExp = new RegExp(/(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d\.\d+([+-][0-2]\d:[0-5]\d|Z))|(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d([+-][0-2]\d:[0-5]\d|Z))|(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d([+-][0-2]\d:[0-5]\d|Z))/)
+    const iso8601Regex = new RegExp(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(\.\d+)?(Z|[+-]\d{2}:\d{2})$/);
 
-    return isoDateRegExp.test(input)
+    return iso8601Regex.test(input)
 }
 
 export const isValidTimeZone = (tz: string): boolean => {
@@ -233,7 +233,7 @@ export const handleFromGoogleTime = (
     time: luxon.DateTime<true> | luxon.DateTime<false>,
     gt: TimeZoneResponseData
 ) => {
-    return time.plus({
+    return time.minus({
         seconds: gt.rawOffset + gt.dstOffset
     })
         .setZone(
@@ -245,8 +245,8 @@ export const handleFromGoogleTime = (
 export const handleStartEnd = async (
     startEnd: PostStartEndT
 ): Promise<[
-    TimeI,
-    TimeI
+    TimeDocT,
+    TimeDocT
 ]> => {
     const {
         start,
@@ -293,21 +293,21 @@ export const handleStartEnd = async (
         throw err(500, 'unable timezone data from google')
     })
 
-    const startTime: TimeI = {
+    const startTime = new Time({
         local: start,
         utc: handleFromGoogleTime(startDT, startGT).toISO(),
         iana: startGT.timeZoneId,
         geoLocation: geo,
         lastUpdated: DateTime.now().toUTC().toUnixInteger()
-    }
+    })
 
-    const endTime: TimeI = {
-        local: start,
+    const endTime = new Time({
+        local: end,
         utc: handleFromGoogleTime(endDT, endGT).toISO(),
         iana: endGT.timeZoneId,
         geoLocation: geo,
         lastUpdated: DateTime.now().toUTC().toUnixInteger()
-    }
+    })
 
     return [
         startTime,
