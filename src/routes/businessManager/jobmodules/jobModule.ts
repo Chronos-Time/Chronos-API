@@ -1,20 +1,8 @@
 import { Router, Request } from 'express'
-import { businessAdminAuth, getBusinessMid, getJobModule, getJobModules } from '../../../middleware/businessAdmin'
-import { BusinessHoursT } from '../../../models/Business/index.model'
 import JMItem, { JMItemT, PostJMItemT } from '../../../models/Job-modules/Items'
 import { err, handleSaveError } from '../../../constants/general'
 
 const JobModuleRouter = Router()
-
-interface PostjobModuleI {
-    name: string
-    description: string
-    serviceType: string
-    tags: string[]
-    duration: number
-    prepTime: number
-    customHours?: BusinessHoursT
-}
 
 //url: /business/:businessId/job_module/:jobModuleId
 
