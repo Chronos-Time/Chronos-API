@@ -2,8 +2,8 @@ import { Router } from 'express'
 import SetupRouter from './setup'
 import manageRouter from './manage'
 import employeeRouter from './employee'
-import JobModulesRouter from './jobmodules'
-import JobModuleRouter from './jobModule'
+import JobModulesRouter from './jobmodules/jobmodules'
+import JobModuleRouter from './jobmodules/jobModule'
 import { businessAdminAuth, getBusinessMid, getJobModule, getJobModules } from '../../middleware/businessAdmin'
 
 
