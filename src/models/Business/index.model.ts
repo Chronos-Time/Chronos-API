@@ -1,12 +1,11 @@
 import { Schema, InferSchemaType, model, Model, Mongoose, Types, Document, PopulatedDoc } from 'mongoose'
 import v from 'validator'
 import { UserT } from '../user/index.model'
-import { AddressDocT, AddressI } from '../Address/index.model'
-import { ISOT, PostUnavailabilityT } from '../../constants/time';
-import { TimeDocT, TimeI, TimeSchema } from '../Time.model'
-import { UnavailabilityDocT, UnavailabilitySchema } from '../Unavailability.model';
-import { JobModuleDocT, PostjobModuleT } from '../Job-modules/index.model';
-import { ErrT } from '../../constants/general';
+import { AddressDocT } from '../Address/index.model'
+import { PostUnavailabilityT } from '../../constants/time'
+import { TimeDocT } from '../Time.model'
+import { UnavailabilityDocT, UnavailabilitySchema } from '../Unavailability.model'
+import { JobModuleDocT, PostjobModuleT } from '../Job-modules/index.model'
 
 export type BusinessDocT = Document<unknown, any, BusinessI> & BusinessI
 

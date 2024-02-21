@@ -1,9 +1,9 @@
 import { Router, Request } from 'express'
-import { businessAdminAuth, getBusinessMid, getJobModules } from '../../middleware/businessAdmin'
-import { err, handleSaveError } from '../../constants/general'
-import JobModule from '../../models/Job-modules/index.model';
-import { minute } from '../../constants/time'
-import { BusinessHoursT } from '../../models/Business/index.model'
+import { businessAdminAuth, getBusinessMid, getJobModules } from '../../../middleware/businessAdmin'
+import { err, handleSaveError } from '../../../constants/general'
+import JobModule from '../../../models/Job-modules/index.model';
+import { minute } from '../../../constants/time'
+import { BusinessHoursT } from '../../../models/Business/index.model'
 
 const JobModulesRouter = Router()
 

@@ -5,6 +5,7 @@ import { TimeI } from '../Time.model'
 import { UnavailabilityDocT, UnavailabilitySchema } from '../Unavailability.model'
 import Unavailability from '../Unavailability.model';
 import { PostUnavailabilityT } from '../../constants/time'
+import { JMItemDocT, JMItemSchema, PostJMItemT } from './Items'
 
 export type JobModuleDocT = Document<unknown, any, JobModuleI> & JobModuleI
 
@@ -17,12 +18,18 @@ export type PostjobModuleT = {
     prepTime: number
     customHours?: JobModuleI['customHours']
     unavailability?: PostUnavailabilityT[]
+    provideAddress?: boolean
+    specialRequest?: boolean
 }
 
 
-
-interface JobModuleI {
+/**
+ * Job Modules is basically a paid time slot
+ * for customers
+ */
+interface JobModuleI extends JobModuleMethodsI {
     name: string
+    description: string
     business: Types.ObjectId
     /**
      * main job type ex 'Personal Fitness Trainer', 'Hair Stylist', 'Barber'
@@ -38,8 +45,13 @@ interface JobModuleI {
      * In unix Time
      */
     duration: number
+    /**
+     * The time it takes to before starting this job
+     * *This will not be seen by the client
+     * 
+     * In Unix Integer
+     */
     prepTime: number
-    description: string
     /**
      * This will be taken from the business schema
      */
@@ -49,6 +61,19 @@ interface JobModuleI {
      * but can be updated by data
      */
     customHours: BusinessHoursT
+    items: JMItemDocT[],
+
+    /**
+     * Requires the client to provide an
+     * address for this job module
+     */
+    provideAddress: boolean
+    /**
+     * Allow the client to provide extra information 
+     * or ask for specail requests
+     */
+    specialRequest: boolean
+
 
     //day 2:
     /*
@@ -61,12 +86,31 @@ interface JobModuleI {
 }
 
 interface JobModuleMethodsI {
+    /**
+     * This create an item that the user will be able to select
+     * **validation needs to edit the recursion
+     * 
+     * @param item PostJMItemT
+     * @returns JobModuleDocT
+     */
+    createItem: (
+        item: PostJMItemT
+    ) => Promise<JobModuleDocT>
 
+    /**
+     * Remove Item from this jobModule
+     * 
+     * @param name String
+     * @returns JobModuleDocT
+     */
+    remItem: (
+        name: string
+    ) => Promise<JobModuleDocT>
 }
 
 type JobModuleModelT = Model<JobModuleI, {}, JobModuleMethodsI>
 
-const jobModuleSchema = new Schema<JobModuleI, JobModuleModelT, JobModuleMethodsI>({
+export const jobModuleSchema = new Schema<JobModuleI, JobModuleModelT, JobModuleMethodsI>({
     /**
      * The name of the job module that people will see
      */
@@ -89,6 +133,14 @@ const jobModuleSchema = new Schema<JobModuleI, JobModuleModelT, JobModuleMethods
     },
     description: {
         type: String
+    },
+    provideAddress: {
+        type: Boolean,
+        default: false
+    },
+    specialRequest: {
+        type: Boolean,
+        default: true
     },
     customHours: [
         {
@@ -218,7 +270,8 @@ const jobModuleSchema = new Schema<JobModuleI, JobModuleModelT, JobModuleMethods
             }
         }
     ],
-    unavaiability: [UnavailabilitySchema]
+    unavaiability: [UnavailabilitySchema],
+    items: [JMItemSchema]
 })
 
 jobModuleSchema.pre('save', async function (next) {
@@ -281,6 +334,8 @@ jobModuleSchema.pre('save', async function (next) {
 
     next()
 })
+
+require('./methods')
 
 export type JobModuleT = InferSchemaType<typeof jobModuleSchema>
 
