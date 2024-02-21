@@ -18,6 +18,8 @@ export type PostjobModuleT = {
     prepTime: number
     customHours?: JobModuleI['customHours']
     unavailability?: PostUnavailabilityT[]
+    provideAddress?: boolean
+    specialRequest?: boolean
 }
 
 
@@ -60,6 +62,18 @@ interface JobModuleI extends JobModuleMethodsI {
      */
     customHours: BusinessHoursT
     items: JMItemDocT[],
+
+    /**
+     * Requires the client to provide an
+     * address for this job module
+     */
+    provideAddress: boolean
+    /**
+     * Allow the client to provide extra information 
+     * or ask for specail requests
+     */
+    specialRequest: boolean
+
 
     //day 2:
     /*
@@ -119,6 +133,14 @@ export const jobModuleSchema = new Schema<JobModuleI, JobModuleModelT, JobModule
     },
     description: {
         type: String
+    },
+    provideAddress: {
+        type: Boolean,
+        default: false
+    },
+    specialRequest: {
+        type: Boolean,
+        default: true
     },
     customHours: [
         {

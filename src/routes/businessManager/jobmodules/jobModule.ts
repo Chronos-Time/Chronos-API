@@ -22,27 +22,15 @@ JobModuleRouter.get('/', async (req: Request<{}, {}, {}>, res) => {
     }
 })
 
-JobModuleRouter.post('/item', async (req: Request<{}, {}, PostJMItemT>, res) => {
+JobModuleRouter.post('/item', async (req: Request<{}, {}, { item: PostJMItemT }>, res) => {
     try {
-        const {
-            name,
-            addedTime,
-            price,
-            chargeType,
-            description,
-            isRequired,
-            items
-        } = req.body
+        const { item } = req.body
 
-        const updatedJM = await req.jobModule.createItem({
-            name,
-            addedTime,
-            price,
-            chargeType,
-            description,
-            isRequired,
-            items
-        })
+        if (typeof item !== 'object') {
+            throw err(400, 'Invalid item was provided')
+        }
+
+        const updatedJM = await req.jobModule.createItem(item)
 
         res.status(200).send(updatedJM)
     } catch (e: any) {
