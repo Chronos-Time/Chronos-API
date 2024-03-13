@@ -1,6 +1,7 @@
 import { Router, Request } from 'express'
 import JMItem, { JMItemT, PostJMItemT } from '../../../models/Job-modules/Items'
 import { err, handleSaveError } from '../../../constants/general'
+import { JobModuleT } from '../../../models/Job-modules/index.model'
 
 const JobModuleRouter = Router()
 
@@ -8,6 +9,24 @@ const JobModuleRouter = Router()
 
 JobModuleRouter.get('/', async (req: Request<{}, {}, {}>, res) => {
     try {
+        res.status(200).send(req.jobModule)
+    } catch (e: any) {
+        if (e.isCustomErr) {
+            res
+                .status(e.status)
+                .send(e.err || e)
+        } else {
+            res
+                .status(500)
+                .send(e)
+        }
+    }
+})
+
+JobModuleRouter.put('/', async (req: Request<{}, {}, JobModuleT>, res) => {
+    try {
+
+
         res.status(200).send(req.jobModule)
     } catch (e: any) {
         if (e.isCustomErr) {
