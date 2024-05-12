@@ -1,7 +1,7 @@
 import { Router, Request } from 'express'
 import JMItem, { JMItemT, PostJMItemT } from '../../../models/Job-modules/Items'
 import { err, handleSaveError } from '../../../constants/general'
-import { JobModuleT } from '../../../models/Job-modules/index.model'
+import JobModule, { JobModuleT } from '../../../models/Job-modules/index.model'
 
 const JobModuleRouter = Router()
 
@@ -25,9 +25,15 @@ JobModuleRouter.get('/', async (req: Request<{}, {}, {}>, res) => {
 
 JobModuleRouter.put('/', async (req: Request<{}, {}, JobModuleT>, res) => {
     try {
+        //add validation
+        const updateJM = req.body as JobModuleT
 
+        await req.jobModule.updateOne(updateJM)
+            .catch(e => {
+                throw handleSaveError(e)
+            })
 
-        res.status(200).send(req.jobModule)
+        res.status(200).send(updateJM)
     } catch (e: any) {
         if (e.isCustomErr) {
             res
@@ -41,15 +47,13 @@ JobModuleRouter.put('/', async (req: Request<{}, {}, JobModuleT>, res) => {
     }
 })
 
-JobModuleRouter.post('/item', async (req: Request<{}, {}, { item: PostJMItemT }>, res) => {
+JobModuleRouter.post('/item', async (req: Request<{}, {}, PostJMItemT>, res) => {
     try {
-        const { item } = req.body
-
-        if (typeof item !== 'object') {
+        if (typeof req.body !== 'object') {
             throw err(400, 'Invalid item was provided')
         }
 
-        const updatedJM = await req.jobModule.createItem(item)
+        const updatedJM = await req.jobModule.createItem(req.body)
 
         res.status(200).send(updatedJM)
     } catch (e: any) {
@@ -68,6 +72,7 @@ JobModuleRouter.post('/item', async (req: Request<{}, {}, { item: PostJMItemT }>
 JobModuleRouter.get('/item/:item_name', async (req: Request<{ item_name: string }, {}, {}>, res) => {
     try {
         const jmItem = await req.jobModule.items.find(jm => jm.name === req.params.item_name)
+        console.log(req.params.item_name)
 
         if (!jmItem) {
             throw err(400, 'Unable to find job module item')

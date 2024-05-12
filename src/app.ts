@@ -21,7 +21,11 @@ app.use(express.urlencoded())
 app.use(cookieParser(process.env.SESSION_SECRET!))
 app.use(cors(
     {
-        origin: ['http://localhost:3000', 'http://localhost:3001'],
+        origin: [
+            'http://localhost:3000',
+            'http://localhost:3001',
+            'https://chronos-business-9pzdwglx9-emmanuel-browns-projects.vercel.app'
+        ],
         credentials: true,
         // methods: "GET, POST, PUT, DELETE, OPTIONS",
         // origin: 'http://localhost:3000',

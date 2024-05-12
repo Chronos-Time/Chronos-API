@@ -4,7 +4,7 @@ import UserSetupRouter from './setup'
 
 const clientRouter = express.Router()
 
-clientRouter.use('', userRouter)
 clientRouter.use('', UserSetupRouter)
+clientRouter.use('', userRouter)
 
 export default clientRouter

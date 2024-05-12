@@ -66,6 +66,12 @@ export const isUTC = (input: string): boolean => {
     }
 }
 
+/**
+ * 
+ * 
+ * @param input - string
+ * @returns Boolean
+ */
 export const isISO = (input: string): boolean => {
     const iso8601Regex = new RegExp(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(\.\d+)?(Z|[+-]\d{2}:\d{2})$/);
 
