@@ -2,6 +2,7 @@ import { InferSchemaType, Model, Schema, model, Document } from 'mongoose'
 import { coordinatesT } from '../constants/location'
 import { handleTime, isValidTimeZone } from '../constants/time'
 import { BusinessI } from './Business/index.model'
+import { DateTime } from 'luxon'
 
 export type TimeDocT = Document<unknown, any, TimeI> & TimeI
 
@@ -12,6 +13,10 @@ export interface TimeI {
     rawOffset?: number
     geoLocation: coordinatesT
     lastUpdated: number
+    /**
+     * Js Date in UTC
+     */
+    jsDate: Date
 }
 
 interface TimeMethodsI {
@@ -69,6 +74,9 @@ export const TimeSchema = new Schema<TimeI, TimeModelT, TimeMethodsI>({
     },
     lastUpdated: {
         type: Number
+    },
+    jsDate: {
+        type: Date
     }
 })
 
@@ -84,12 +92,14 @@ TimeSchema.pre('save', async function (next) {
         errs.push('Local time or UTC time must be provided')
     }
 
-    if (time.isModified([
-        'geoLocation',
-        'local',
-        'iana',
-        'utc',
-    ])) {
+    if (
+        time.isModified([
+            'geoLocation',
+            'local',
+            'iana',
+            'utc',
+        ])
+    ) {
         await handleTime({
             local: time.local,
             iana: time.iana,
@@ -101,6 +111,9 @@ TimeSchema.pre('save', async function (next) {
                 time.iana = updatedTime.iana
                 time.geoLocation = updatedTime.geoLocation
                 time.lastUpdated = updatedTime.lastUpdated
+                time.jsDate = DateTime
+                    .fromISO(updatedTime.utc)
+                    .toJSDate()
             })
             .catch(e => {
                 errs.push('unable to update time that was modified')

@@ -47,7 +47,7 @@ async function main() {
 
     if (mcResponse !== 'PONG!') {
         console.log(c.red('Mailchimp connection failed'))
-        console.log(mcResponse.response.data)
+        // console.log(mcResponse)
     } else {
         console.log(c.green('Mailchimp connection established successfully'))
     }
