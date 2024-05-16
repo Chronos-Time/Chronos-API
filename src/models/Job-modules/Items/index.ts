@@ -141,7 +141,6 @@ JMItemSchema.add({
 JMItemSchema.pre('save', async function (next) {
     const item = this
 
-
     next()
 })
 

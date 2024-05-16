@@ -7,21 +7,20 @@ import { TimeDocT, TimeSchema } from '../Time.model'
 import { UnavailabilityDocT, UnavailabilitySchema } from '../Unavailability.model'
 import { JobModuleDocT, PostjobModuleT } from '../Job-modules/index.model'
 import { BusinessDocT } from '../Business/index.model'
+import JobModule from '../Job-modules/index.model';
+import { JobDetailItemI, JobDetailItemSchema } from './job_details.model'
 
 export type BookingDocT = Document<unknown, any, BookingI> & BookingI
-
-type JobDetailItemT = {
-    name: string
-    description: string
-    items: JobDetailItemT
-    clientResponse: string
-}
 
 interface BookingI {
     business: PopulatedDoc<Document<Types.ObjectId> & BusinessDocT>
     client: PopulatedDoc<Document<Types.ObjectId> & UserDocT>
     location: PopulatedDoc<Document<Types.ObjectId> & AddressDocT>
-
+    jobModule: PopulatedDoc<Document<Types.ObjectId> & JobModuleDocT>
+    /**
+     * Price calculated by the Job details
+     */
+    price: number
     /**
      * The start of the job, can be editted
      */
@@ -35,7 +34,7 @@ interface BookingI {
         jobName: string,
         description: string
         duration: number
-        items: JobDetailItemT
+        items: JobDetailItemI
         specialRequest: string
     }
 }
@@ -64,6 +63,10 @@ const BookingSchema = new Schema<BookingI, BookingModalT, BookingMethodsI & Book
         type: Schema.Types.ObjectId,
         ref: 'Address'
     },
+    jobModule: {
+        type: Schema.Types.ObjectId,
+        ref: 'Job_Module'
+    },
     start: {
         type: TimeSchema,
         required: true
@@ -72,7 +75,18 @@ const BookingSchema = new Schema<BookingI, BookingModalT, BookingMethodsI & Book
         type: TimeSchema,
         required: true
     },
-
+    details: {
+        jobName: {
+            type: String,
+            required: true
+        },
+        description: String,
+        duration: {
+            type: Number
+        },
+        specialRequest: String,
+        items: [JobDetailItemSchema]
+    }
 })
 
 require('./methods')
