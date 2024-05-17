@@ -1,5 +1,5 @@
 import { InferSchemaType, Model, Schema, model, Document } from 'mongoose'
-import { TimeDocT, TimeSchema } from './Time.model';
+import { TimeDocT, TimeSchema } from './time.model';
 
 export type UnavailabilityDocT = Document<unknown, any, UnavailabilityI> & UnavailabilityI
 

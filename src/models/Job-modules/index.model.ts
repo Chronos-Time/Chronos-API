@@ -1,7 +1,7 @@
 import { Schema, InferSchemaType, model, Types, Model, Document } from 'mongoose'
 import Business, { BusinessHoursT } from '../Business/index.model'
 import { err } from '../../constants/general'
-import { TimeI } from '../Time.model'
+import { TimeI } from '../time.model'
 import { UnavailabilityDocT, UnavailabilitySchema } from '../Unavailability.model'
 import Unavailability from '../Unavailability.model';
 import { PostUnavailabilityT } from '../../constants/time'

@@ -1,4 +1,4 @@
-import Time, { TimeDocT, TimeI } from '../models/Time.model'
+import Time, { TimeDocT, TimeI } from '../models/time.model'
 import { coordinatesT, validateGeo } from './location'
 import luxon, { DateTime, Interval } from 'luxon'
 import { UnavailabilityT } from '../models/Business/index.model';

@@ -3,7 +3,7 @@ import v from 'validator'
 import { UserT } from '../user/index.model'
 import { AddressDocT } from '../Address/index.model'
 import { PostUnavailabilityT } from '../../constants/time'
-import { TimeDocT } from '../Time.model'
+import { TimeDocT } from '../time.model'
 import { UnavailabilityDocT, UnavailabilitySchema } from '../Unavailability.model'
 import { JobModuleDocT, PostjobModuleT } from '../Job-modules/index.model'
 
