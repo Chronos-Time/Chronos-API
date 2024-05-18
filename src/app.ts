@@ -24,7 +24,7 @@ app.use(cors(
     {
         origin: [
             'http://localhost:3000',
-            process.env.BUSINESS_WEBSITE
+            process.env.BUSINESS_WEBSITE!
         ],
         credentials: true,
         // methods: "GET, POST, PUT, DELETE, OPTIONS",
