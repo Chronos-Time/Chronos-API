@@ -66,6 +66,12 @@ export const isUTC = (input: string): boolean => {
     }
 }
 
+/**
+ * 
+ * 
+ * @param input - string
+ * @returns Boolean
+ */
 export const isISO = (input: string): boolean => {
     const iso8601Regex = new RegExp(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(\.\d+)?(Z|[+-]\d{2}:\d{2})$/);
 
@@ -229,6 +235,14 @@ export const timeToUnix = (time: TimeI) => {
     return DateTime.fromISO(time.utc).toUnixInteger()
 }
 
+/**
+ * Takes provided luxon datetime and google's timezone data
+ * to return a luxon datetime that is set to UTC
+ * 
+ * @param time 
+ * @param gt 
+ * @returns Luxon DateTime instance that's already set UTC
+ */
 export const handleFromGoogleTime = (
     time: luxon.DateTime<true> | luxon.DateTime<false>,
     gt: TimeZoneResponseData
@@ -349,6 +363,9 @@ export const handleTime = async (
 
     const localDT = DateTime.fromISO(local)
 
+    /**
+     * Time from google
+     */
     const localGT = await googleTime(
         geo,
         localDT.toUnixInteger()
@@ -356,12 +373,15 @@ export const handleTime = async (
         throw err(500, 'unable timezone data from google')
     })
 
+    const utc = handleFromGoogleTime(localDT, localGT).toISO()
+
     const localTime: TimeI = {
         local,
         utc: handleFromGoogleTime(localDT, localGT).toISO(),
         iana: localGT.timeZoneId,
         geoLocation: geo,
-        lastUpdated: DateTime.now().toUTC().toUnixInteger()
+        lastUpdated: DateTime.now().toUTC().toUnixInteger(),
+        jsDate: DateTime.fromISO(utc).toJSDate()
     }
 
     return localTime

@@ -124,7 +124,8 @@ export const JMItemSchema = new Schema<JMItemI, JMItemModelT, JMItemMethodsI>({
             'Single Select',
             'Multi Select',
             'Conditional'
-        ]
+        ],
+        default: 'Single Select'
     },
     minSelection: {
         type: Number,
@@ -139,7 +140,6 @@ JMItemSchema.add({
 
 JMItemSchema.pre('save', async function (next) {
     const item = this
-
 
     next()
 })

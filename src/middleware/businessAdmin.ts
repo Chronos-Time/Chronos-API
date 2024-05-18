@@ -1,11 +1,12 @@
 import { NextFunction, Request, Response } from 'express'
 import jwt from 'jsonwebtoken'
-import { err } from '../constants/general'
+import { err, stringToId } from '../constants/general'
 import BusinessAdmin, { BusinessAdminDocT } from '../models/BusinessAdmin/index.model'
 import Business from '../models/Business/index.model'
 import { businessPopulate, businessSelect } from '../routes/businessManager/constants'
 import { BusinessDocT } from '../models/Business/index.model';
 import JobModule, { JobModuleDocT } from '../models/Job-modules/index.model'
+import { Types } from 'mongoose'
 
 declare module "express-serve-static-core" {
     interface Request {
@@ -60,6 +61,10 @@ export const getBusinessMid = async (req: Request<businessURLT, {}, {}>, res: Re
         const businessId = req.params.businessId
         if (!businessId) throw err(400, 'No businessId found')
 
+        if (!Types.ObjectId.isValid(businessId)) {
+            throw err(400, 'Invalid business Id')
+        }
+
         const business = await Business.findById({
             _id: businessId,
             admins: { $in: req.businessAdmin._id }
@@ -73,7 +78,11 @@ export const getBusinessMid = async (req: Request<businessURLT, {}, {}>, res: Re
 
         next()
     } catch (err: any) {
-        res.status(err.status).send(err)
+        if (err.isCustomErr) {
+            res.status(err.status).send(err)
+        } else {
+            res.status(500).send(err)
+        }
     }
 }
 

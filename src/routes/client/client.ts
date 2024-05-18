@@ -55,7 +55,7 @@ userRouter.put('/updateBasicInfo', async (req: Request, res: Response) => {
     try {
         const d = req.body
 
-        const validKeys = ['firstName', 'lastName']
+        const validKeys = ['firstName', 'lastName', 'dob']
         const isValid = validateKeys(d, validKeys)
         if (!isValid) throw err(400, 'Invalid keys')
 
@@ -75,6 +75,31 @@ userRouter.put('/updateBasicInfo', async (req: Request, res: Response) => {
         res
             .status(e.status || 500)
             .send({ message: e.message })
+    }
+})
+
+userRouter.put('/updatedob', async (req: Request<{}, {}, { dob: string }>, res: Response) => {
+    try {
+        const dob = req.body.dob
+
+        const user = await User.findById(req.userData._id)
+            .catch(e => {
+                throw err(
+                    500,
+                    'unable to find user',
+                    e
+                )
+            })
+
+        await user.updatedob(dob)
+
+        res.status(200).send(user.prettyPrint())
+    } catch (e: any) {
+        if (e.isCustomErr) {
+            res
+                .status(e.status)
+                .send(e.error || e.message)
+        }
     }
 })
 

@@ -37,9 +37,10 @@ SetupRouter.post("/setup", async (req: Request<{}, {}, PostBusinessI>, res) => {
             businessEmail,
             picture,
             description,
-            address,
-
+            address
         } = req.body
+
+        console.log(req.body)
 
         const isValidKeys = validateKeys(req.body, [
             'name',

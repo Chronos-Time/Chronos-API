@@ -4,15 +4,31 @@ import {
     model,
     Model,
     Document,
-    Types
+    Types,
+    Date
 } from 'mongoose'
 import v from 'validator'
 import jwt from 'jsonwebtoken'
 import bcrypt from 'bcrypt'
-import { capitalizeAllFirstLetters } from '../../constants/general'
+import { capitalizeAllFirstLetters, err, handleSaveError } from '../../constants/general';
+import { DateTime } from 'luxon'
+import { ISOT, hour, isISO } from '../../constants/time'
 
 export type UserDocT = Document<unknown, any, UserI> & UserI
 
+export interface PostUserI {
+    email: string
+    password: string
+    firstName: string
+    lastName: string
+    google: {
+        googleId: string
+        accessToken: string
+        refreshToken: string
+    },
+    dob?: string
+    picture?: string
+}
 export interface UserI {
     email: string
     password: string
@@ -22,7 +38,8 @@ export interface UserI {
         googleId: string
         accessToken: string
         refreshToken: string
-    }
+    },
+    dob: string
     picture: string
     auth: {
         jwt: string
@@ -37,6 +54,7 @@ interface UserMethodsI {
     prettyPrint(): {
         [key: string]: any
     }
+    updatedob(dateString: string): Promise<UserDocT>
 }
 
 interface UserVirtualsI {
@@ -78,6 +96,26 @@ export const userSchema = new Schema<UserI, UserModelT, UserMethodsI & UserVirtu
         required: true,
         trim: true,
         minlength: 3
+    },
+    dob: {
+        type: String,
+        validate: {
+            validator: (value: string) => {
+                try {
+                    if (isISO(value)) return false
+
+                    const providedDT = DateTime.fromISO(value).toUnixInteger()
+                    const nowWithTolerance = DateTime.now().toUnixInteger() + hour
+
+                    return providedDT < nowWithTolerance
+                } catch {
+                    return false
+                }
+            },
+            message: (props: any) => {
+                return `${props.value} is not a valid ISO Date or you can not be born in the future`
+            }
+        }
     },
     google: {
         default: {},
@@ -132,6 +170,31 @@ userSchema.methods.prettyPrint = function () {
     delete userObject.google
 
     return userObject
+}
+
+userSchema.methods.updatedob = async function (dateString: ISOT): Promise<UserDocT> {
+    try {
+        const user = this
+
+        if (!isISO(dateString)) {
+            throw err(
+                400,
+                'Invalid ISO string provided'
+            )
+        }
+
+        const dobDT = DateTime.fromISO(dateString)
+
+        user.dob = dobDT.plus({ days: 1 }).toISODate()
+        await user.save()
+            .catch(e => {
+                throw handleSaveError(e)
+            })
+
+        return user
+    } catch (e) {
+        throw e
+    }
 }
 
 userSchema.pre('save', async function (next) { //must use ES5 function to use the "this" binding

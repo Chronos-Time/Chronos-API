@@ -44,6 +44,13 @@ businessSchema.methods.addUnavailablity = async function (
         if (!iana && !geoLocation) {
             let businessAddress = null
             businessAddress = await Address.findById(business.address._id)
+                .catch(e => {
+                    throw err(
+                        400,
+                        'unable to timezone from business address',
+                        e
+                    )
+                })
             const coordinates = businessAddress.location.coordinates || undefined
 
             postUnavailability.geoLocation = coordinates

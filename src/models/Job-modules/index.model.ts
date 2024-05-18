@@ -3,9 +3,9 @@ import Business, { BusinessHoursT } from '../Business/index.model'
 import { err } from '../../constants/general'
 import { TimeI } from '../time.model'
 import { UnavailabilityDocT, UnavailabilitySchema } from '../Unavailability.model'
-import Unavailability from '../Unavailability.model';
 import { PostUnavailabilityT } from '../../constants/time'
 import { JMItemDocT, JMItemSchema, PostJMItemT } from './Items'
+import z from 'zod'
 
 export type JobModuleDocT = Document<unknown, any, JobModuleI> & JobModuleI
 
@@ -22,6 +22,26 @@ export type PostjobModuleT = {
     specialRequest?: boolean
 }
 
+const JobModuleZ = z.object({
+    name: z
+        .string({
+            required_error: 'Name must be provided'
+        }),
+    description: z
+        .string({
+            required_error: 'Description must be provided'
+        }),
+    duration: z
+        .bigint({
+            required_error: 'Duration must be prodved'
+        }),
+    prepTime: z
+        .bigint({
+            required_error: 'Prep time must be provided'
+        }),
+    specialRequest: z.boolean(),
+    provideAddress: z.boolean()
+})
 
 /**
  * Job Modules is basically a paid time slot
