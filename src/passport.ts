@@ -11,7 +11,7 @@ Passport.use(
     {
       clientID: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-      callbackURL: 'http://localhost:5001/auth/login/google/callback',
+      callbackURL: process.env.THIS_API_URL! + '/auth/login/google/callback',
       scope: ['profile', 'email', 'https://www.googleapis.com/auth/calendar'],
       // passReqToCallback: true,
       state: true,

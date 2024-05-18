@@ -24,7 +24,6 @@ export const BookingRequest = z.object({
             message: 'Client ID does not exist'
         })
     ,
-
     specialRequest: z.string().nullable(),
     providedAddress: z.string().nullable()
 })
