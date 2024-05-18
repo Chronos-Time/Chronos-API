@@ -12,10 +12,13 @@ declare module "express-serve-static-core" {
 
 export async function auth(req: Request, res: Response, next: NextFunction) {
     try {
+        const bearer = req.headers.authorization
         const cookies = req.cookies
-        if (!cookies['access_token']) throw err(401, 'No cookie found')
 
-        const decoded = jwt.verify(cookies['access_token'], process.env.JWT_SECRET!) as { _id: string }
+        const theAccessToken = bearer.split(' ')[1] || cookies['access_token']
+        if (!theAccessToken) throw err(401, 'No cookie found')
+
+        const decoded = jwt.verify(theAccessToken, process.env.JWT_SECRET!) as { _id: string }
         if (!decoded._id) throw err(403, 'Token not found')
 
         const user = await User.findById(decoded._id)

@@ -6,12 +6,13 @@ import { err, handleSaveError } from './constants/general'
 
 const Passport = new passport.Passport()
 
+console.log('This is a big updated!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
 Passport.use(
   new GoogleStrategy.Strategy(
     {
-      clientID: process.env.GOOGLE_CLIENT_ID!,
+      clientID: process.env.GOOGLE_CLIENT_ID! || '111395781940-a1qa6knlseh74m4jgnuk9mc67ld59abi.apps.googleusercontent.com',
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-      callbackURL: 'http://localhost:5001/auth/login/google/callback',
+      callbackURL: process.env.THIS_API_URL! + '/auth/login/google/callback',
       scope: ['profile', 'email', 'https://www.googleapis.com/auth/calendar'],
       // passReqToCallback: true,
       state: true,
@@ -19,6 +20,9 @@ Passport.use(
     },
     async function (accessToken, refreshToken, profile, done) {
       try {
+        console.log(c.cyan('Google Strategy'))
+        console.log('cliendtID', c.cyan(process.env.GOOGLE_CLIENT_ID))
+        console.log('client_secret', c.cyan(process.env.GOOGLE_CLIENT_SECRET))
         const googleId = profile.id
         const email = profile._json.email
         const picture = profile._json.picture

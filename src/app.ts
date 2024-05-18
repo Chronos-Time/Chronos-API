@@ -19,9 +19,13 @@ const app: Application = express()
 app.use(express.json())
 app.use(express.urlencoded())
 app.use(cookieParser(process.env.SESSION_SECRET!))
+console.log('business_website', process.env.BUSINESS_WEBSITE)
 app.use(cors(
     {
-        origin: ['http://localhost:3000'],
+        origin: [
+            'http://localhost:3000',
+            process.env.BUSINESS_WEBSITE
+        ],
         credentials: true,
         // methods: "GET, POST, PUT, DELETE, OPTIONS",
         // origin: 'http://localhost:3000',

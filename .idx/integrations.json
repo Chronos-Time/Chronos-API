@@ -1,4 +1,10 @@
 {
   "firebase_hosting": {},
-  "cloud_run_deploy": {}
+  "cloud_run_deploy": {
+    "lastDeployment": {
+      "region": "us-east1",
+      "url": "https://idx-chronos-api-7730174-bsgiapu43q-ue.a.run.app",
+      "serviceName": "idx-chronos-api-7730174"
+    }
+  }
 }
