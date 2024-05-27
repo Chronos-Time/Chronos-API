@@ -6,11 +6,10 @@ import { err, handleSaveError } from './constants/general'
 
 const Passport = new passport.Passport()
 
-console.log('This is a big updated!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
 Passport.use(
   new GoogleStrategy.Strategy(
     {
-      clientID: process.env.GOOGLE_CLIENT_ID! || '111395781940-a1qa6knlseh74m4jgnuk9mc67ld59abi.apps.googleusercontent.com',
+      clientID: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
       callbackURL: process.env.THIS_API_URL! + '/auth/login/google/callback',
       scope: ['profile', 'email', 'https://www.googleapis.com/auth/calendar'],

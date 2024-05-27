@@ -15,7 +15,7 @@ export async function auth(req: Request, res: Response, next: NextFunction) {
         const bearer = req.headers.authorization
         const cookies = req.cookies
 
-        const theAccessToken = bearer.split(' ')[1] || cookies['access_token']
+        const theAccessToken = bearer?.split(' ')[1] || cookies['access_token']
         if (!theAccessToken) throw err(401, 'No cookie found')
 
         const decoded = jwt.verify(theAccessToken, process.env.JWT_SECRET!) as { _id: string }

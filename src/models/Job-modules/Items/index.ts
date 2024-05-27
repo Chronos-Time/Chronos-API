@@ -3,6 +3,12 @@ import { Schema, InferSchemaType, model, Types, Model, Document } from 'mongoose
 
 export type JMItemDocT = Document<unknown, any, JMItemI> & JMItemI
 
+export type questionTypesT = 'Single Select' |
+    'Multi Select' |
+    'Conditional' |
+    'Number' |
+    'Written Response'
+
 export type PostJMItemT = {
     name: string
     description: string
@@ -36,7 +42,7 @@ export const isChargeType = (input: JMItemI['chargeType']) => {
  * when a client make requests
  * 
  */
-interface JMItemI {
+export interface JMItemI {
     /**
      * Name of the Job Module Item
      */
@@ -65,10 +71,11 @@ interface JMItemI {
     'Price Only' |
     'Price If No Subscription'
 
-    questionType: 'Single Select' |
-    'Multi Select' |
-    'Conditional'
+    questionType: questionTypesT
 
+    /**
+     * If Question type is Multi Select
+     */
     minSelection: number
 
     items: JMItemI[]
@@ -123,7 +130,8 @@ export const JMItemSchema = new Schema<JMItemI, JMItemModelT, JMItemMethodsI>({
         enum: [
             'Single Select',
             'Multi Select',
-            'Conditional'
+            'Conditional',
+            'Number'
         ],
         default: 'Single Select'
     },

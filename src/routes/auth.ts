@@ -78,7 +78,6 @@ authRouter.post('/login/user', async (req: Request<{}, {}, { email: string, pass
     })
       .send({
         'access_token': access_token,
-        'rapid': 'updated'
       })
   } catch (e: any) {
     if (e.isCustomErr) {

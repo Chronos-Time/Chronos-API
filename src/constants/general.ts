@@ -1,7 +1,33 @@
-import e from "express"
 import { Types } from "mongoose"
+import { JMItemI } from "../models/Job-modules/Items"
 
 export type IdI = Types.ObjectId | string
+
+/**
+ * The `deepFind` function in TypeScript allows you to recursively search for a nested property within
+ * an object using a specified path.
+ * @param {Object} obj - An object containing nested properties that you want to search through.
+ * @param {string} path - The `path` parameter in the `deepFind` function is a string that represents
+ * the path to the property you want to find within the object. The path should be in dot notation,
+ * where each part of the path represents a nested property within the object. For example, if you have
+ * an object
+ * @returns The `deepFind` function returns the value found at the specified path within the given
+ * object. If the path does not exist in the object, it returns `undefined`.
+ */
+export const deepFind = (obj: Object, path: string) => {
+    const paths = path.split('.')
+    let current: { [key: string]: any } = obj
+
+    for (let i = 0; i < paths.length; ++i) {
+        if (current[paths[i]] == undefined) {
+            return undefined;
+        } else {
+            current = current[paths[i]]
+        }
+    }
+
+    return current
+}
 
 /**
  * The function `err` returns an object with a status code, message, and optional error, indicating a

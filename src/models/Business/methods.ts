@@ -1,6 +1,6 @@
-import { BusinessDocT, BusinessHoursT, businessSchema } from './index.model'
+import Business, { BusinessDocT, BusinessHoursT, businessSchema } from './index.model'
 import { ErrT, err, handleSaveError } from '../../constants/general'
-import { handleStartEnd, minute, PostUnavailabilityT } from '../../constants/time'
+import { handleStartEnd, minute, postStartEndT, PostStartEndT, PostUnavailabilityT } from '../../constants/time'
 import Address from '../Address/index.model'
 import Unavailability from '../Unavailability.model';
 import JobModule, { PostjobModuleT } from '../Job-modules/index.model';
@@ -195,5 +195,73 @@ businessSchema.methods.addJobModule = async function (
         return jobModule
     } catch (e: any) {
         return e
+    }
+}
+
+businessSchema.methods.isBookingAvailable = async function (
+    startEnd: postStartEndT
+): Promise<Boolean> {
+    try {
+        const business = this
+
+        const [
+            start,
+            end
+        ] = await handleStartEnd(startEnd)
+
+        const data = await Business.findOne({
+            _id: business.id,
+            unavailability: {
+                $elemMatch: {
+                    $or: [
+                        {
+                            // Booking start is within an unavailability period
+                            "start.jsDate": {
+                                $lte: start.jsDate
+                            },
+                            "end.jsDate": {
+                                $gte: start.jsDate
+                            }
+                        },
+                        {
+                            // Booking end is within an unavailability period
+                            "start.jsDate": {
+                                $lte: end.jsDate
+                            },
+                            "end.jsDate": {
+                                $gte: end.jsDate
+                            }
+                        },
+                        {
+                            // Booking completely covers an unavailability period
+                            "start.jsDate": {
+                                $lte: start.jsDate
+                            },
+                            "end.jsDate": {
+                                $gte: end.jsDate
+                            }
+                        },
+                        {
+
+                            "start.jsDate": {
+                                $lte: end.jsDate
+                            },
+                            "end.jsDate": {
+                                $gte: start.jsDate
+                            }
+                        }
+                    ],
+                    // $and: [
+                    //     { "start.utc": { $lt: end.jsDate } },  // Booking starts before the unavailability ends
+                    //     { "end.utc": { $gt: start.jsDate } }   // Booking ends after the unavailability starts
+                    // ]
+                }
+            }
+        })
+
+        return !data
+    }
+    catch {
+        return false
     }
 }

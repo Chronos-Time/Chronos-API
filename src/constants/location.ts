@@ -2,6 +2,7 @@ import Address, { AddressDocT, AddressI } from '../models/Address/index.model'
 import { Document, Types } from 'mongoose'
 import _ from 'lodash'
 import { Client, GeocodeResponse, GeocodeResponseData, TravelMode, TravelRestriction, UnitSystem } from "@googlemaps/google-maps-services-js"
+import z from 'zod'
 
 /**
  * Geo coordinates
@@ -18,6 +19,16 @@ export type coordinatesT = [
      */
     number,
 ]
+
+export const coordinatesZ = z.tuple([
+    z.number().refine(val => val >= -90 && val <= 90, {
+        message: "Latitude must be a number between -90 and 90",
+    }),
+    z.number().refine(val => val >= -180 && val <= 180, {
+        message: "Latitude must be a number between -180 and 180",
+    })
+])
+
 export const maps = new Client({})
 
 type addyI = Document<unknown, any, AddressI> & AddressI & {

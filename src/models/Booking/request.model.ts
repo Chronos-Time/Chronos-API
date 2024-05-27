@@ -2,8 +2,10 @@ import z from 'zod'
 import { Types } from 'mongoose'
 import User from '../user/index.model'
 import Business from '../Business/index.model'
+import { postStartEndZ } from '../../constants/time'
 
-export const BookingRequest = z.object({
+
+export const BookingRequestZ = z.object({
     business: z
         .string({
             required_error: 'Name must be provided'
@@ -24,9 +26,12 @@ export const BookingRequest = z.object({
             message: 'Client ID does not exist'
         })
     ,
+    schedule: postStartEndZ,
     specialRequest: z.string().nullable(),
     providedAddress: z.string().nullable()
 })
+
+export type BookingRequestT = z.infer<typeof BookingRequestZ>
 
 const isValidClient = async (clientId: string): Promise<boolean> => {
     try {

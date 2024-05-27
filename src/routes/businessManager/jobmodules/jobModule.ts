@@ -71,8 +71,8 @@ JobModuleRouter.post('/item', async (req: Request<{}, {}, PostJMItemT>, res) => 
 
 JobModuleRouter.get('/item/:item_name', async (req: Request<{ item_name: string }, {}, {}>, res) => {
     try {
-        const jmItem = await req.jobModule.items.find(jm => jm.name === req.params.item_name)
-        console.log(req.params.item_name)
+        const itemName = req.params.item_name
+        const jmItem = req.jobModule.deepFind(itemName.split('.'))
 
         if (!jmItem) {
             throw err(400, 'Unable to find job module item')
@@ -92,21 +92,22 @@ JobModuleRouter.get('/item/:item_name', async (req: Request<{ item_name: string 
     }
 })
 
+
 JobModuleRouter.put('/item/:item_name', async (req: Request<{ item_name: string }, {}, { item: JMItemT }>, res) => {
     try {
-        const jmItemIndex = await req.jobModule.items.findIndex(jm => jm.name === req.params.item_name)
-        if (jmItemIndex === -1) {
-            throw err(400, `Unable to find Job Module Item: ${req.params.item_name}`)
-        }
+        const updatedJM = req.jobModule.deepFindAndUpdate(
+            req.params.item_name,
+            req.body.item
+        )
+        // const updatedJM = req.jobModule.flatten()
 
-        req.jobModule.items[jmItemIndex] = new JMItem(req.body.item)
 
-        await req.jobModule.save()
-            .catch(e => {
-                throw handleSaveError(e)
-            })
+        // await req.jobModule.save()
+        //     .catch(e => {
+        //         throw handleSaveError(e)
+        //     })
 
-        res.status(200).send(req.jobModule.items[jmItemIndex])
+        res.status(200).send(updatedJM)
     } catch (e: any) {
         if (e.isCustomErr) {
             res

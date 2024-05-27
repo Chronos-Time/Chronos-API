@@ -1,10 +1,11 @@
 import Time, { TimeDocT, TimeI } from '../models/time.model'
-import { coordinatesT, validateGeo } from './location'
+import { coordinatesT, coordinatesZ, validateGeo } from './location'
 import luxon, { DateTime, Interval } from 'luxon'
 import { UnavailabilityT } from '../models/Business/index.model';
 import { err } from './general';
 import { getTZGeo, googleTime } from './googleTime';
 import { TimeZoneResponseData } from '@googlemaps/google-maps-services-js';
+import z from 'zod'
 
 export const minute = 60
 export const hour = minute * 60
@@ -15,6 +16,14 @@ export const week = day * 7
  * ISO 8601
  */
 export type ISOT = string
+
+export const ISOZ = z
+    .string()
+    .refine((value) => {
+        return isISO(value)
+    }, {
+        message: 'String must be ISO8601'
+    })
 
 /**
  * This is for when time is ever being sent to the api
@@ -45,6 +54,21 @@ export type PostStartEndT = {
      */
     geoLocation: coordinatesT
 }
+
+export const postStartEndZ = z.strictObject({
+    start: ISOZ,
+    end: ISOZ,
+    geoLocation: coordinatesZ.optional(),
+    iana: z.string().optional()
+})
+    .refine(data => {
+        return data.geoLocation !== undefined && data.iana !== undefined, {
+            message: "Either geoLocation or iana must be defined",
+            path: ["geoLocation", "iana"]
+        }
+    })
+
+export type postStartEndT = z.infer<typeof postStartEndZ>
 
 export type PostUnavailabilityT = PostStartEndT & {
     /**
@@ -257,7 +281,7 @@ export const handleFromGoogleTime = (
 }
 
 export const handleStartEnd = async (
-    startEnd: PostStartEndT
+    startEnd: PostStartEndT | postStartEndT
 ): Promise<[
     TimeDocT,
     TimeDocT
@@ -279,8 +303,9 @@ export const handleStartEnd = async (
 
     let geo: coordinatesT
 
+    //@ts-ignore
     if (validateGeo(geoLocation)) {
-        geo = geoLocation
+        geo = geoLocation as [number, number]
     } else if (isValidTimeZone(iana)) {
         geo = await getTZGeo(iana)
             .catch(() => {
@@ -312,7 +337,8 @@ export const handleStartEnd = async (
         utc: handleFromGoogleTime(startDT, startGT).toISO(),
         iana: startGT.timeZoneId,
         geoLocation: geo,
-        lastUpdated: DateTime.now().toUTC().toUnixInteger()
+        lastUpdated: DateTime.now().toUTC().toUnixInteger(),
+        jsDate: handleFromGoogleTime(startDT, startGT).toJSDate()
     })
 
     const endTime = new Time({
@@ -320,7 +346,8 @@ export const handleStartEnd = async (
         utc: handleFromGoogleTime(endDT, endGT).toISO(),
         iana: endGT.timeZoneId,
         geoLocation: geo,
-        lastUpdated: DateTime.now().toUTC().toUnixInteger()
+        lastUpdated: DateTime.now().toUTC().toUnixInteger(),
+        jsDate: handleFromGoogleTime(endDT, endGT).toJSDate()
     })
 
     return [

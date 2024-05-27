@@ -1,12 +1,11 @@
 import { Schema, InferSchemaType, model, Types, Model, Document } from 'mongoose'
 import Business, { BusinessHoursT } from '../Business/index.model'
-import { err } from '../../constants/general'
+import { err, deepFind } from '../../constants/general';
 import { TimeI } from '../time.model'
 import { UnavailabilityDocT, UnavailabilitySchema } from '../Unavailability.model'
 import { PostUnavailabilityT } from '../../constants/time'
-import { JMItemDocT, JMItemSchema, PostJMItemT } from './Items'
+import { JMItemDocT, JMItemI, JMItemSchema, PostJMItemT } from './Items'
 import z from 'zod'
-
 export type JobModuleDocT = Document<unknown, any, JobModuleI> & JobModuleI
 
 export type PostjobModuleT = {
@@ -53,7 +52,6 @@ interface JobModuleI extends JobModuleMethodsI {
     business: Types.ObjectId
     /**
      * main job type ex 'Personal Fitness Trainer', 'Hair Stylist', 'Barber'
-     * 
      */
     serviceType: string
     /**
@@ -105,6 +103,11 @@ interface JobModuleI extends JobModuleMethodsI {
     */
 }
 
+export type answersT = {
+    path: string
+    answer: answersT[] | boolean | number | string
+}
+
 interface JobModuleMethodsI {
     /**
      * This create an item that the user will be able to select
@@ -126,6 +129,15 @@ interface JobModuleMethodsI {
     remItem: (
         name: string
     ) => Promise<JobModuleDocT>
+
+    deepFind: (path: string[]) => JMItemI | undefined
+    deepFindAndUpdate: (path: string, data: JMItemI) => JobModuleDocT | undefined
+    flatten: () => { [key: string]: JMItemI }
+
+    validRequest: (
+        this: JMItemDocT,
+        answers: answersT[]
+    ) => boolean
 }
 
 type JobModuleModelT = Model<JobModuleI, {}, JobModuleMethodsI>

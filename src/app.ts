@@ -19,7 +19,6 @@ const app: Application = express()
 app.use(express.json())
 app.use(express.urlencoded())
 app.use(cookieParser(process.env.SESSION_SECRET!))
-console.log('business_website', process.env.BUSINESS_WEBSITE)
 app.use(cors(
     {
         origin: [

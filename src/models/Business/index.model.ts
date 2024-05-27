@@ -2,7 +2,7 @@ import { Schema, InferSchemaType, model, Model, Mongoose, Types, Document, Popul
 import v from 'validator'
 import { UserT } from '../user/index.model'
 import { AddressDocT } from '../Address/index.model'
-import { PostUnavailabilityT } from '../../constants/time'
+import { PostStartEndT, PostUnavailabilityT, postStartEndT } from '../../constants/time'
 import { TimeDocT } from '../time.model'
 import { UnavailabilityDocT, UnavailabilitySchema } from '../Unavailability.model'
 import { JobModuleDocT, PostjobModuleT } from '../Job-modules/index.model'
@@ -105,6 +105,10 @@ export interface BusinessMethodsI {
     addJobModule: (
         postJobModule: PostjobModuleT
     ) => Promise<JobModuleDocT>
+
+    isBookingAvailable: (
+        startEnd: postStartEndT
+    ) => Promise<Boolean>
 }
 
 interface BusinessVirtualsI {

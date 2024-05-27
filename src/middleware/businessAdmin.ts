@@ -86,10 +86,8 @@ export const getBusinessMid = async (req: Request<businessURLT, {}, {}>, res: Re
     }
 }
 
-export const getJobModules = async (req: Request<businessURLT, { test: string }, {}>, res: Response, next: NextFunction) => {
+export const getJobModules = async (req: Request<businessURLT, {}, {}>, res: Response, next: NextFunction) => {
     try {
-        const param = req.query
-
         const jobModules = await JobModule.find({
             business: req.business._id
         })
