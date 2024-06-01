@@ -4,6 +4,8 @@ import { handleStartEnd, minute, postStartEndT, PostStartEndT, PostUnavailabilit
 import Address from '../Address/index.model'
 import Unavailability from '../Unavailability.model';
 import JobModule, { PostjobModuleT } from '../Job-modules/index.model';
+import { DateTime } from 'luxon';
+import { utcToLocal } from '../../constants/googleTime';
 
 
 businessSchema.methods.updateBusinessHours = async function (
@@ -129,7 +131,6 @@ businessSchema.methods.remUnavailability = async function (
             if (jbunavaiabilities !== jb.unavaiability.length) {
                 jb.save()
             }
-
         }
 
         return business
@@ -203,6 +204,7 @@ businessSchema.methods.isBookingAvailable = async function (
 ): Promise<Boolean> {
     try {
         const business = this
+        await business.populate('address')
 
         const [
             start,
@@ -259,7 +261,89 @@ businessSchema.methods.isBookingAvailable = async function (
             }
         })
 
-        return !data
+        if (data !== null) {
+            throw false
+        }
+
+        /**
+         * Start in UTC
+         */
+        const startDTUTC = DateTime.fromISO(start.utc).toUTC()
+
+        /**
+         * End in UTC
+         */
+        const endDTUTC = DateTime.fromISO(end.utc).toUTC()
+
+        const startBusinessDay = business.businessHours[startDTUTC.weekday % 7]
+        const endBusinessDay = business.businessHours[endDTUTC.weekday % 7]
+
+        if (startBusinessDay.isClosed || endBusinessDay.isClosed) {
+            throw false
+        }
+
+        //just in case it hasn't been populated
+        const businessAddress = await Address.findById(business.address._id)
+            .catch(() => {
+                throw err(500, 'unable to find validated business address')
+            })
+
+        const isWithinHours = async (
+            /**
+             * **MUST BE IN UTC
+             */
+            time: DateTime<true> | DateTime<false>,
+            day: BusinessDocT['businessHours'][number]
+        ) => {
+            const localTime = await utcToLocal(
+                time.toISO(),
+                undefined,
+                businessAddress.location.coordinates
+            )
+
+            const beginningOfDay = localTime
+                .startOf('day')
+                .plus({
+                    minutes: day.start * 30
+                })
+                .toUnixInteger()
+
+            const endOfDay = localTime
+                .startOf('day')
+                .plus({
+                    minutes: day.end * 30
+                })
+                .toUnixInteger()
+
+            const localTimeUnix = localTime.toUnixInteger()
+
+            return beginningOfDay <= localTimeUnix && localTimeUnix <= endOfDay
+        }
+
+        const startWithinHours = await isWithinHours(startDTUTC, startBusinessDay)
+        const endWithinHours = await isWithinHours(endDTUTC, endBusinessDay)
+
+        if (!startWithinHours || !endWithinHours) {
+            throw false
+        }
+
+        if (startBusinessDay.name !== endBusinessDay.name) {
+            let currentDayIndex = startDTUTC.weekday
+
+            while (business.businessHours[currentDayIndex % 7].name !== endBusinessDay.name) {
+                let currentDay = business.businessHours[currentDayIndex % 7]
+                let nextDay = business.businessHours[(currentDayIndex + 1) % 7]
+
+                if (currentDay.end !== 48 && nextDay.start !== 0) {
+                    throw false
+                }
+
+                currentDayIndex += 1
+            }
+        }
+
+
+        return true
     }
     catch {
         return false

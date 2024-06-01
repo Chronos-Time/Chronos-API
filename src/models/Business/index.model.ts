@@ -109,6 +109,8 @@ export interface BusinessMethodsI {
     isBookingAvailable: (
         startEnd: postStartEndT
     ) => Promise<Boolean>
+
+
 }
 
 interface BusinessVirtualsI {

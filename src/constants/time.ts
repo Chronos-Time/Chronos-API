@@ -91,15 +91,13 @@ export const isUTC = (input: string): boolean => {
 }
 
 /**
- * 
+ * Checking to see if this is a valid ISO 8601 string
  * 
  * @param input - string
  * @returns Boolean
  */
 export const isISO = (input: string): boolean => {
-    const iso8601Regex = new RegExp(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(\.\d+)?(Z|[+-]\d{2}:\d{2})$/);
-
-    return iso8601Regex.test(input)
+    return DateTime.fromISO(input).isValid
 }
 
 export const isValidTimeZone = (tz: string): boolean => {
@@ -267,15 +265,15 @@ export const timeToUnix = (time: TimeI) => {
  * @param gt 
  * @returns Luxon DateTime instance that's already set UTC
  */
-export const handleFromGoogleTime = (
+export const googleTimeToLocal = (
     time: luxon.DateTime<true> | luxon.DateTime<false>,
     gt: TimeZoneResponseData
 ) => {
-    return time.minus({
+    return time.plus({
         seconds: gt.rawOffset + gt.dstOffset
     })
         .setZone(
-            'UTC',
+            gt.timeZoneId,
             { keepLocalTime: true }
         )
 }
@@ -318,36 +316,40 @@ export const handleStartEnd = async (
     const startDT = DateTime.fromISO(start)
     const endDT = DateTime.fromISO(end)
 
-    const startGT = await googleTime(
+    //I know this is redundant but the normal wasn't working
+    const startUTC = DateTime.fromISO(startDT.toUTC().toISO())
+    const endUTC = DateTime.fromISO(endDT.toUTC().toISO())
+
+    const startGTData = await googleTime(
         geo,
-        startDT.toUnixInteger()
+        startUTC.toUnixInteger()
     ).catch(e => {
         throw err(500, 'unable timezone data from google')
     })
 
-    const endGT = await googleTime(
+    const endGTData = await googleTime(
         geo,
-        endDT.toUnixInteger()
+        endUTC.toUnixInteger()
     ).catch(e => {
         throw err(500, 'unable timezone data from google')
     })
 
     const startTime = new Time({
-        local: start,
-        utc: handleFromGoogleTime(startDT, startGT).toISO(),
-        iana: startGT.timeZoneId,
+        local: googleTimeToLocal(startDT, startGTData).toISO(),
+        utc: startUTC.toISO(),
+        iana: startGTData.timeZoneId,
         geoLocation: geo,
         lastUpdated: DateTime.now().toUTC().toUnixInteger(),
-        jsDate: handleFromGoogleTime(startDT, startGT).toJSDate()
+        jsDate: startDT.toUTC().toISO()
     })
 
     const endTime = new Time({
-        local: end,
-        utc: handleFromGoogleTime(endDT, endGT).toISO(),
-        iana: endGT.timeZoneId,
+        local: googleTimeToLocal(endDT, endGTData).toISO(),
+        utc: endUTC.toISO(),
+        iana: endGTData.timeZoneId,
         geoLocation: geo,
         lastUpdated: DateTime.now().toUTC().toUnixInteger(),
-        jsDate: handleFromGoogleTime(endDT, endGT).toJSDate()
+        jsDate: endDT.toUTC().toJSDate()
     })
 
     return [
@@ -400,15 +402,13 @@ export const handleTime = async (
         throw err(500, 'unable timezone data from google')
     })
 
-    const utc = handleFromGoogleTime(localDT, localGT).toISO()
-
     const localTime: TimeI = {
         local,
-        utc: handleFromGoogleTime(localDT, localGT).toISO(),
+        utc: localDT.toUTC().toISO(),
         iana: localGT.timeZoneId,
         geoLocation: geo,
         lastUpdated: DateTime.now().toUTC().toUnixInteger(),
-        jsDate: DateTime.fromISO(utc).toJSDate()
+        jsDate: localDT.toUTC().toJSDate()
     }
 
     return localTime

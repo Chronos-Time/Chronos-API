@@ -1,6 +1,6 @@
 import mongoose, { model } from 'mongoose'
 import _ from 'lodash'
-import { coordinatesT, validateGeo } from '../../constants/location'
+import { coordinatesT, validateGeo } from '../../constants/location';
 
 export interface PointI {
     type: 'Point'

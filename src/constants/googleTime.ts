@@ -1,5 +1,8 @@
 import { Client, PlaceInputType } from '@googlemaps/google-maps-services-js'
-import { coordinatesT } from './location'
+import { coordinatesT, validateGeo } from './location'
+import { googleTimeToLocal, isISO, isUTC, isValidTimeZone } from './time'
+import { err } from './general'
+import { DateTime } from 'luxon'
 
 const client = new Client({
 
@@ -38,4 +41,38 @@ export const getTZGeo = async (iana: string): Promise<coordinatesT> => {
     } catch (e) {
         return null
     }
+}
+
+export const utcToLocal = async (
+    utc: string,
+    iana?: string,
+    geoLocation?: coordinatesT
+) => {
+    let geo: coordinatesT
+
+    if (!isUTC(utc)) {
+        throw err(400, 'invalid utc 8601 string')
+    }
+
+    if (validateGeo(geoLocation)) {
+        geo = geoLocation as [number, number]
+    } else if (isValidTimeZone(iana)) {
+        geo = await getTZGeo(iana)
+            .catch(() => {
+                throw err(500, 'unable iana from google')
+            })
+    } else {
+        throw err(400, 'Valid timezone was not provided')
+    }
+
+    const utcDT = DateTime.fromISO(utc).toUTC()
+
+    const gtData = await googleTime(
+        geo,
+        utcDT.toUnixInteger()
+    ).catch(e => {
+        throw err(500, 'unable timezone data from google')
+    })
+
+    return googleTimeToLocal(utcDT, gtData)
 }
