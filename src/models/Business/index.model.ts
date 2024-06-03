@@ -5,7 +5,8 @@ import { AddressDocT } from '../Address/index.model'
 import { PostStartEndT, PostUnavailabilityT, postStartEndT } from '../../constants/time'
 import { TimeDocT } from '../time.model'
 import { UnavailabilityDocT, UnavailabilitySchema } from '../Unavailability.model'
-import { JobModuleDocT, PostjobModuleT } from '../Job-modules/index.model'
+import JobModule, { JobModuleDocT, PostjobModuleT } from '../Job-modules/index.model';
+import { BookingDocT } from '../Booking/index.model'
 
 export type BusinessDocT = Document<unknown, any, BusinessI> & BusinessI
 
@@ -78,6 +79,21 @@ export interface BusinessI extends BusinessMethodsI {
      * This is the new email that the user wants to change to. 
     */
     newEmail?: string
+    slots: {
+        slotName: string
+        bookings: {
+            booking: PopulatedDoc<Document<Types.ObjectId> & BookingDocT>
+            /**
+             * The UTC start time of a booking in unix
+             */
+            start: number
+            /**
+             * The UTC end time of a booking in unix
+             */
+            end: number
+        }[]
+        forJobmodules: PopulatedDoc<Document<Types.ObjectId> & JobModuleDocT>[]
+    }[]
     socials: {
         facebook?: string
         instagram?: string
@@ -109,8 +125,6 @@ export interface BusinessMethodsI {
     isBookingAvailable: (
         startEnd: postStartEndT
     ) => Promise<Boolean>
-
-
 }
 
 interface BusinessVirtualsI {
@@ -196,6 +210,21 @@ export const businessSchema = new Schema<BusinessI, BusinessModelT, BusinessMeth
         type: Schema.Types.ObjectId,
         ref: 'Address'
     },
+    slots: [{
+        bookings: [{
+            booking: {
+                type: Schema.Types.ObjectId,
+                ref: 'Booking'
+            },
+            start: Number,
+            end: Number,
+        }],
+        slotName: String,
+        forJobmodules: [{
+            type: Schema.Types.ObjectId,
+            ref: 'Job_Module'
+        }]
+    }],
     socials: {
         facebook: {
             type: String,
@@ -387,20 +416,44 @@ export const businessSchema = new Schema<BusinessI, BusinessModelT, BusinessMeth
 })
 
 businessSchema.pre('save', async function (next) {
-    const business = this // "this" is in reverence to userSchema
+    this // "this" is in reverence to userSchema
 
-    if (business.isModified('name')) {
+    if (this.isModified('name')) {
 
     }
 
-    if (business.isModified('businessEmail')) {
-        business.businessEmail = business.businessEmail.toLowerCase()
+    if (this.isModified('businessEmail')) {
+        this.businessEmail = this.businessEmail.toLowerCase()
 
         //Email validation...   
     }
 
-    if (business.isModified('unavailability')) {
+    if (this.isModified('unavailability')) {
         //find duplicate name
+    }
+
+    if (this.slots.length === 0) {
+        const jobModules = await JobModule.find({
+            business: this.id
+        }, {
+            _id: 1
+        })
+
+        this.slots.push({
+            slotName: 'Slot 1',
+            forJobmodules: jobModules.map(jm => jm._id),
+            bookings: []
+        })
+    }
+
+    if (this.isModified('slots')) {
+        this.slots = this.slots.map((slot, index) => {
+            if (!slot.slotName) {
+                slot.slotName = `Slot ${index}`
+            }
+
+            return slot
+        })
     }
 
     next()

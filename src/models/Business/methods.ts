@@ -342,6 +342,45 @@ businessSchema.methods.isBookingAvailable = async function (
             }
         }
 
+        const startDTUTCUnix = startDTUTC.toUnixInteger()
+        const endDTUTCUnix = endDTUTC.toUnixInteger()
+
+        let isSlotAvailable = false
+
+
+        business.slots.forEach((slot, index) => {
+            if (isSlotAvailable) {
+                return
+            }
+
+            if (slot.bookings.length === 0) {
+                isSlotAvailable = true
+            }
+
+            let bookingIndex = 0
+            let keepSearching = true
+
+            while (!keepSearching || bookingIndex !== slot.bookings.length) {
+                const book = slot.bookings[bookingIndex]
+
+                if (book.end < startDTUTCUnix) {
+                    keepSearching = false
+                    const nextBooking = slot.bookings[bookingIndex + 1]
+
+                    if (!nextBooking) {
+                        isSlotAvailable = true
+                    } else if (nextBooking.start > endDTUTCUnix) {
+                        isSlotAvailable = true
+                    }
+                }
+
+                bookingIndex += 1
+            }
+        })
+
+        if (!isSlotAvailable) {
+            throw false
+        }
 
         return true
     }

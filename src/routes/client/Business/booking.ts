@@ -18,14 +18,23 @@ BookingRouter.post('/', async (req: Request<{}, {}, BookingRequestT>, res: Respo
             providedAddress: rawBookingRequest.providedAddress || null
         })
 
-        const isBookingAvailable = await req.business.isBookingAvailable(rawBookingRequest.schedule)
 
-        res.status(200).send(isBookingAvailable)
+        const data = await req.business.isBookingAvailable(rawBookingRequest.schedule)
+
+
+        res.status(200).send({
+            pass,
+            data
+        })
     } catch (e: any) {
         if (e.isCustomErr) {
             res
                 .status(e.status)
                 .send(e.error || e.message)
+        } else if (e.name === 'ZodError') {
+            res
+                .status(400)
+                .send(e)
         } else {
             res.status(500).send(e)
         }
