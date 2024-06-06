@@ -105,7 +105,7 @@ interface JobModuleI extends JobModuleMethodsI {
 
 export type answersT = {
     path: string
-    answer: answersT[] | boolean | number | string
+    answer: answersT[] | boolean | number | string | answersT
 }
 
 interface JobModuleMethodsI {
@@ -134,7 +134,7 @@ interface JobModuleMethodsI {
     deepFindAndUpdate: (path: string, data: JMItemI) => JobModuleDocT | undefined
     flatten: () => { [key: string]: JMItemI }
 
-    validRequest: (
+    verifyAnswer: (
         this: JMItemDocT,
         answers: answersT[]
     ) => boolean

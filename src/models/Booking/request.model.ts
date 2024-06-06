@@ -4,6 +4,7 @@ import User from '../user/index.model'
 import Business from '../Business/index.model'
 import { postStartEndZ } from '../../constants/time'
 import { err } from '../../constants/general'
+import JobModule from '../Job-modules/index.model'
 
 
 export const BookingRequestZ = z.object({
@@ -22,9 +23,16 @@ export const BookingRequestZ = z.object({
             message: 'Client ID does not exist'
         })
     ,
+    jobModule: z
+        .string({
+            required_error: 'Job module id must be provided'
+        })
+    ,
+    answers: z.any(),
     schedule: postStartEndZ,
     specialRequest: z.string().nullable(),
-    providedAddress: z.string().nullable()
+    providedAddress: z.string().nullable(),
+
 })
     .superRefine(async (data, ctx) => {
         const business = await Business.findById(data.business)
@@ -47,6 +55,29 @@ export const BookingRequestZ = z.object({
                 fatal: true,
                 path: ['business', 'schedule']
             })
+        }
+
+        const jobModule = await JobModule.findById(data.jobModule)
+        if (!jobModule) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: 'Job module was not found',
+                fatal: true,
+                path: ['jobModule']
+            })
+
+            return z.NEVER
+        }
+
+        if (jobModule.provideAddress && !data.providedAddress) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: 'This job module requires an address',
+                fatal: true,
+                path: ['jobModule']
+            })
+
+            return z.NEVER
         }
 
         return z.NEVER

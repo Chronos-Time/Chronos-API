@@ -355,6 +355,7 @@ businessSchema.methods.isBookingAvailable = async function (
 
             if (slot.bookings.length === 0) {
                 isSlotAvailable = true
+                return
             }
 
             let bookingIndex = 0

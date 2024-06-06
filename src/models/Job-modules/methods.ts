@@ -1,6 +1,6 @@
 import { deepFind, err, handleSaveError } from "../../constants/general"
 import JMItem, { JMItemDocT, JMItemI, PostJMItemT, isChargeType } from "./Items"
-import { JobModuleDocT, answersT, jobModuleSchema } from "./index.model"
+import { JobModuleDocT, answersT, jobModuleSchema } from './index.model';
 
 jobModuleSchema.methods.createItem = async function (
     item: PostJMItemT
@@ -197,14 +197,14 @@ jobModuleSchema.methods.flatten = function (
             currentPath: string
         ) {
             if (typeof currentObj !== 'object' || currentObj === null) {
-                return;
+                return
             }
 
             if (currentObj.name) {
                 const newPath = currentPath ? `${currentPath}.${currentObj.name}` : currentObj.name;
 
                 const { name, items, ...rest } = currentObj._doc
-                result[newPath] = rest;
+                result[newPath] = rest
 
                 if (Array.isArray(items)) {
                     for (let item of items) {
@@ -212,7 +212,6 @@ jobModuleSchema.methods.flatten = function (
                     }
                 }
             }
-            // }
 
         }
         recurse(jobModule, '')
@@ -223,17 +222,82 @@ jobModuleSchema.methods.flatten = function (
 }
 
 
-
-jobModuleSchema.methods.validRequest = function (
+jobModuleSchema.methods.verifyAnswer = function (
     this: JobModuleDocT,
     answers: answersT[]
 ): boolean {
     try {
         const jobModule = this
 
-        answers.forEach(answer => {
-            if (jobModule.deepFind(answer.path.split('.')) === undefined) {
-                throw undefined
+        const flatJM = jobModule.flatten()
+
+        const flatKeys = Object.keys(flatJM)
+
+        let parents: string[] = []
+        let requiredjmItems: string[] = []
+
+        for (let answer of answers) {
+            if (!flatKeys.includes(answer.path)) {
+                throw false
+            }
+
+            const jmItem = flatJM[answer.path]
+
+            let answeredCorrectly = false
+
+            if (jmItem.questionType === 'Number') {
+                if (typeof answer.answer === 'number') {
+                    answeredCorrectly = true
+                }
+            }
+
+            if (jmItem.questionType === 'Written Response') {
+                if (typeof answer.answer === 'string') {
+                    answeredCorrectly = true
+                }
+            }
+
+            if (jmItem.questionType === 'Conditional') {
+                if (typeof answer.answer === 'boolean') {
+                    answeredCorrectly = true
+                }
+            }
+
+            if (jmItem.questionType === 'Single Select') {
+                if (typeof answer.answer === 'object') {
+                    answeredCorrectly = true
+                }
+            }
+
+            if (jmItem.questionType === 'Multi Select') {
+                if (Array.isArray(answer.answer)) {
+                    if (answer.answer.length >= jmItem.minSelection) {
+                        answeredCorrectly = true
+                    }
+                }
+            }
+
+            if (!answeredCorrectly) {
+                throw false
+            }
+
+            const lastPeriod = answer.path.lastIndexOf('.')
+            let parentStr = answer.path
+            if (lastPeriod !== -1) {
+                parentStr = parentStr.substring(0, lastPeriod)
+            }
+            parents.push(parentStr)
+
+            if (jmItem.name === jobModule.name || jmItem.isRequired) {
+                requiredjmItems.push(answer.path)
+            }
+
+            flatKeys.filter(key => key === answer.path)
+        }
+
+        requiredjmItems.forEach(item => {
+            if (!parents.includes(item)) {
+                throw false
             }
         })
 
